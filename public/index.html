@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garo's Multi-App Platform</title>
+    <meta name="description" content="Explore tariff data, find pets, and check Jets sports statistics">
+    <link rel="stylesheet" href="styles.css">
+    <!-- Add Tailwind CDN for now, will use built version later -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+</head>
+<body class="bg-gray-50">
+    <header class="bg-blue-600 text-white shadow-md">
+        <div class="container mx-auto px-4 py-6">
+            <nav class="flex justify-between items-center">
+                <div class="text-2xl font-bold">Garo's Platform</div>
+                <div class="hidden md:flex space-x-6">
+                    <a href="#tariff" class="hover:text-blue-200 transition">Tariff Explorer</a>
+                    <a href="#pets" class="hover:text-blue-200 transition">Pet Finder</a>
+                    <a href="#jets" class="hover:text-blue-200 transition">Jets Stats</a>
+                    <a href="#contact" class="hover:text-blue-200 transition">Contact</a>
+                </div>
+                <button class="md:hidden" id="mobile-menu-button">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </nav>
+            <!-- Mobile Menu -->
+            <div class="hidden md:hidden mt-4 pb-4" id="mobile-menu">
+                <a href="#tariff" class="block py-2 hover:text-blue-200 transition">Tariff Explorer</a>
+                <a href="#pets" class="block py-2 hover:text-blue-200 transition">Pet Finder</a>
+                <a href="#jets" class="block py-2 hover:text-blue-200 transition">Jets Stats</a>
+                <a href="#contact" class="block py-2 hover:text-blue-200 transition">Contact</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- App container - React will mount here -->
+        <div id="app" class="container mx-auto px-4 py-8"></div>
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-12">
+        <div class="container mx-auto px-4 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-xl font-semibold mb-4">About</h3>
+                    <p>A multi-application platform showcasing data visualization skills, API integration, and modern web development techniques.</p>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-4">Quick Links</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#tariff" class="hover:text-blue-300 transition">Tariff Explorer</a></li>
+                        <li><a href="#pets" class="hover:text-blue-300 transition">Pet Finder</a></li>
+                        <li><a href="#jets" class="hover:text-blue-300 transition">Jets Stats</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-4">Connect</h3>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-2xl hover:text-blue-300 transition"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" class="text-2xl hover:text-blue-300 transition"><i class="fab fa-github"></i></a>
+                        <a href="#" class="text-2xl hover:text-blue-300 transition"><i class="fab fa-twitter"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 pt-6 border-t border-gray-700 text-center">
+                <p>&copy; 2023 Garo's Platform. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="bundle.js"></script>
+    <script>
+        // Simple mobile menu toggle
+        document.getElementById('mobile-menu-button').addEventListener('click', function() {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        });
+    </script>
+</body>
+</html>
