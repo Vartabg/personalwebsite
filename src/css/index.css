@@ -29,3 +29,94 @@
     @apply text-3xl font-bold mb-6 text-gray-800 border-b pb-2;
   }
 }
+
+/* Mobile enhancements */
+@media (max-width: 640px) {
+  .app-section {
+    @apply px-4 py-6;
+  }
+  
+  .card {
+    @apply mx-2;
+  }
+  
+  .section-title {
+    @apply text-2xl;
+  }
+  
+  .btn-primary, .btn-secondary {
+    @apply text-sm px-3 py-2;
+  }
+  
+  table {
+    @apply text-sm;
+  }
+  
+  th, td {
+    @apply py-2 px-2;
+  }
+}
+
+/* Animation effects */
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Subtle hover effects */
+.hover-lift {
+  transition: transform 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+}
+
+/* Better table responsiveness */
+.table-container {
+  @apply overflow-x-auto -mx-4 px-4;
+}
+
+@media (max-width: 640px) {
+  .responsive-table th,
+  .responsive-table td {
+    @apply whitespace-nowrap;
+  }
+}
+
+/* Jets-specific colors */
+.jets-green {
+  color: #125740;
+}
+
+.bg-jets-green {
+  background-color: #125740;
+}
+
+.border-jets-green {
+  border-color: #125740;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
