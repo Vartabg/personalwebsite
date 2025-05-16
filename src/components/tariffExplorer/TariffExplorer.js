@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Chart, LineElement, PointElement, LinearScale, Title, CategoryScale, Tooltip, Legend } from 'chart.js';
+import { Line } from 'react-chartjs-2';
+
+// Register Chart.js components
+Chart.register(LineElement, PointElement, LinearScale, CategoryScale, Title, Tooltip, Legend);
 
 function TariffExplorer() {
   const [loading, setLoading] = useState(true);
@@ -11,40 +16,9 @@ function TariffExplorer() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // In a real app, you would fetch from your API
-        // const response = await axios.get('/api/tariff-data');
-        // setTariffData(response.data);
-        
-        // For now, we'll use placeholder data
-        setTimeout(() => {
-          setTariffData({
-            overview: {
-              title: 'U.S. Tariff Rates (1789-Present)',
-              description: 'Historical tariff rates in the United States have varied significantly over time, influenced by economic policies, wars, and global trade relations.'
-            },
-            rates: [
-              { year: 1789, rate: 8.0, administration: 'Washington' },
-              { year: 1800, rate: 10.0, administration: 'Adams' },
-              { year: 1820, rate: 40.0, administration: 'Monroe' },
-              { year: 1832, rate: 33.0, administration: 'Jackson' },
-              { year: 1860, rate: 18.0, administration: 'Buchanan' },
-              { year: 1870, rate: 44.0, administration: 'Grant' },
-              { year: 1890, rate: 48.0, administration: 'Harrison' },
-              { year: 1910, rate: 21.0, administration: 'Taft' },
-              { year: 1922, rate: 38.0, administration: 'Harding' },
-              { year: 1930, rate: 59.0, administration: 'Hoover' },
-              { year: 1940, rate: 37.0, administration: 'Roosevelt' },
-              { year: 1950, rate: 13.0, administration: 'Truman' },
-              { year: 1970, rate: 10.0, administration: 'Nixon' },
-              { year: 1990, rate: 5.0, administration: 'Bush' },
-              { year: 2000, rate: 3.0, administration: 'Clinton' },
-              { year: 2010, rate: 3.5, administration: 'Obama' },
-              { year: 2020, rate: 13.0, administration: 'Trump' },
-              { year: 2022, rate: 7.5, administration: 'Biden' }
-            ]
-          });
-          setLoading(false);
-        }, 1000);
+        const response = await axios.get('/api/tariff-data');
+        setTariffData(response.data);
+        setLoading(false);
       } catch (error) {
         console.error('Error fetching tariff data:', error);
         setError('Failed to load tariff data. Please try again later.');
@@ -54,6 +28,97 @@ function TariffExplorer() {
 
     fetchData();
   }, []);
+
+  const renderTariffChart = () => {
+    if (!tariffData || !tariffData.rates || tariffData.rates.length === 0) {
+      return null;
+    }
+
+    // Prepare chart data
+    const chartData = {
+      labels: tariffData.rates.map(item => item.year),
+      datasets: [
+        {
+          label: 'Tariff Rate (%)',
+          data: tariffData.rates.map(item => item.rate),
+          fill: false,
+          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          borderColor: 'rgba(75, 192, 192, 1)',
+          tension: 0.1,
+          pointRadius: 3,
+          pointHoverRadius: 5
+        }
+      ]
+    };
+
+    const chartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Tariff Rate (%)'
+          }
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Year'
+          }
+        }
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            title: (tooltipItems) => {
+              const index = tooltipItems[0].dataIndex;
+              const year = tariffData.rates[index].year;
+              const admin = tariffData.rates[index].administration;
+              return `${year} (${admin})`;
+            }
+          }
+        },
+        legend: {
+          position: 'top',
+        },
+        title: {
+          display: true,
+          text: 'Historical U.S. Tariff Rates',
+          font: {
+            size: 16
+          }
+        }
+      }
+    };
+
+    return (
+      <div className="h-80 w-full">
+        <Line data={chartData} options={chartOptions} />
+      </div>
+    );
+  };
+
+  const renderKeyLegislation = () => {
+    if (!tariffData || !tariffData.keyLegislation) {
+      return null;
+    }
+
+    return (
+      <div className="mt-6">
+        <h3 className="text-xl font-semibold mb-3">Key Tariff Legislation</h3>
+        <div className="space-y-4">
+          {tariffData.keyLegislation.map((legislation, index) => (
+            <div key={index} className="border-l-4 border-blue-500 pl-4 py-2 bg-blue-50 rounded-r">
+              <h4 className="font-medium">{legislation.name} ({legislation.year})</h4>
+              <p className="text-gray-700 text-sm">{legislation.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   const renderContent = () => {
     if (loading) {
@@ -87,14 +152,9 @@ function TariffExplorer() {
             <h3 className="text-xl font-semibold mb-4">{tariffData.overview.title}</h3>
             <p className="text-gray-700 mb-6">{tariffData.overview.description}</p>
             
-            {/* Simple Chart Placeholder */}
-            <div className="relative h-64 bg-blue-50 rounded-lg p-4 mb-6">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <p className="text-gray-500">Chart visualization will be implemented here</p>
-              </div>
-            </div>
+            {renderTariffChart()}
             
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto mt-8">
               <table className="min-w-full bg-white border border-gray-200">
                 <thead>
                   <tr>
@@ -121,19 +181,41 @@ function TariffExplorer() {
           <div className="bg-white p-6 rounded-lg shadow-md">
             <h3 className="text-xl font-semibold mb-4">Economic Impact of Tariffs</h3>
             <p className="text-gray-700 mb-6">Tariffs can significantly impact economic indicators like GDP, employment, and consumer prices.</p>
-            <div className="bg-blue-50 rounded-lg p-8 text-center">
-              <p className="text-gray-500">Economic impact visualizations will be implemented here.</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="bg-blue-50 p-6 rounded-lg">
+                <h4 className="text-lg font-medium mb-2">GDP Impact</h4>
+                <p className="text-gray-700 mb-4">Research shows that higher tariffs historically correlate with slower GDP growth as trade barriers reduce economic efficiency.</p>
+                <div className="h-40 bg-white rounded border border-gray-200 flex items-center justify-center text-gray-500">
+                  GDP correlation chart placeholder
+                </div>
+              </div>
+              
+              <div className="bg-blue-50 p-6 rounded-lg">
+                <h4 className="text-lg font-medium mb-2">Employment Effects</h4>
+                <p className="text-gray-700 mb-4">While tariffs can protect specific industries, they often lead to overall job losses in the broader economy.</p>
+                <div className="h-40 bg-white rounded border border-gray-200 flex items-center justify-center text-gray-500">
+                  Employment effect chart placeholder
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-blue-50 p-6 rounded-lg">
+              <h4 className="text-lg font-medium mb-2">Consumer Price Effects</h4>
+              <p className="text-gray-700 mb-4">Tariffs typically lead to higher prices for consumers as import costs rise. These effects can vary by industry and product category.</p>
+              <div className="h-40 bg-white rounded border border-gray-200 flex items-center justify-center text-gray-500">
+                Consumer price effect chart placeholder
+              </div>
             </div>
           </div>
         );
-      case 'presidential':
+      case 'legislation':
         return (
           <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold mb-4">Presidential Tariff Policies</h3>
-            <p className="text-gray-700 mb-6">Different administrations have taken varying approaches to tariff policy throughout U.S. history.</p>
-            <div className="bg-blue-50 rounded-lg p-8 text-center">
-              <p className="text-gray-500">Presidential policy comparisons will be implemented here.</p>
-            </div>
+            <h3 className="text-xl font-semibold mb-4">Tariff Legislation History</h3>
+            <p className="text-gray-700 mb-6">Key legislative acts have shaped U.S. tariff policy throughout history.</p>
+            
+            {renderKeyLegislation()}
           </div>
         );
       default:
@@ -162,10 +244,10 @@ function TariffExplorer() {
           Economic Impact
         </button>
         <button
-          onClick={() => setSelectedView('presidential')}
-          className={`px-4 py-2 rounded-md ${selectedView === 'presidential' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+          onClick={() => setSelectedView('legislation')}
+          className={`px-4 py-2 rounded-md ${selectedView === 'legislation' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
         >
-          Presidential Policies
+          Key Legislation
         </button>
       </div>
       

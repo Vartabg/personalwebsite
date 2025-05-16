@@ -7,6 +7,11 @@ function PetFinder() {
   const [error, setError] = useState(null);
   const [pets, setPets] = useState([]);
   const [searched, setSearched] = useState(false);
+  const [filters, setFilters] = useState({
+    type: '',
+    age: '',
+    size: ''
+  });
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -21,54 +26,43 @@ function PetFinder() {
       setError(null);
       setSearched(true);
       
-      // In a real app, you'd fetch from your API
-      // const response = await axios.get(`/api/pets?zipCode=${zipCode}`);
-      // setPets(response.data);
+      // Fetch from our API
+      const response = await axios.get(`/api/pets?zipCode=${zipCode}`);
       
-      // For now, we'll use placeholder data after a brief delay
-      setTimeout(() => {
-        setPets([
-          {
-            id: 1,
-            name: 'Whiskers',
-            type: 'Cat',
-            breed: 'Domestic Shorthair',
-            age: '2 years',
-            gender: 'Male',
-            size: 'Medium',
-            description: 'Whiskers is a playful and affectionate cat who loves attention.',
-            image: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=400&h=400&q=80'
-          },
-          {
-            id: 2,
-            name: 'Luna',
-            type: 'Cat',
-            breed: 'Siamese Mix',
-            age: '1 year',
-            gender: 'Female',
-            size: 'Small',
-            description: 'Luna is a sweet and gentle cat who enjoys cuddling.',
-            image: 'https://images.unsplash.com/photo-1573865526739-10659fec78a5?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8M3x8Y2F0fGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=400&h=400&q=80'
-          },
-          {
-            id: 3,
-            name: 'Oliver',
-            type: 'Cat',
-            breed: 'Tabby',
-            age: '3 years',
-            gender: 'Male',
-            size: 'Large',
-            description: 'Oliver is an independent and curious cat who enjoys exploring.',
-            image: 'https://images.unsplash.com/photo-1495360010541-f48722b34f7d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=400&h=400&q=80'
-          }
-        ]);
-        setLoading(false);
-      }, 1500);
+      // Apply any active filters
+      let filteredPets = response.data.animals || [];
+      
+      if (filters.type && filters.type !== '') {
+        filteredPets = filteredPets.filter(pet => pet.type.toLowerCase() === filters.type.toLowerCase());
+      }
+      
+      if (filters.age && filters.age !== '') {
+        filteredPets = filteredPets.filter(pet => {
+          // Simple age matching logic - could be more sophisticated
+          const petAge = pet.age.toLowerCase();
+          return petAge.includes(filters.age.toLowerCase());
+        });
+      }
+      
+      if (filters.size && filters.size !== '') {
+        filteredPets = filteredPets.filter(pet => pet.size.toLowerCase() === filters.size.toLowerCase());
+      }
+      
+      setPets(filteredPets);
+      setLoading(false);
     } catch (error) {
       console.error('Error fetching pets:', error);
       setError('Failed to fetch pets. Please try again later.');
       setLoading(false);
     }
+  };
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const renderPets = () => {
@@ -117,6 +111,7 @@ function PetFinder() {
                 src={pet.image} 
                 alt={pet.name} 
                 className="w-full h-full object-cover"
+                loading="lazy"
               />
             </div>
             <div className="p-4">
@@ -174,25 +169,40 @@ function PetFinder() {
         </form>
       </div>
       
-      {/* Filter Controls (placeholder) */}
+      {/* Filter Controls */}
       {searched && pets.length > 0 && (
         <div className="bg-gray-50 p-4 rounded-lg mb-6">
           <div className="flex flex-wrap gap-4 items-center">
             <span className="text-gray-700 font-medium">Filter:</span>
-            <select className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <select 
+              name="type" 
+              value={filters.type} 
+              onChange={handleFilterChange}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
               <option value="">All Pet Types</option>
               <option value="cat">Cats</option>
               <option value="dog">Dogs</option>
               <option value="other">Other</option>
             </select>
-            <select className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <select 
+              name="age" 
+              value={filters.age} 
+              onChange={handleFilterChange}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
               <option value="">Any Age</option>
               <option value="baby">Baby</option>
               <option value="young">Young</option>
               <option value="adult">Adult</option>
               <option value="senior">Senior</option>
             </select>
-            <select className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <select 
+              name="size" 
+              value={filters.size} 
+              onChange={handleFilterChange}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
               <option value="">Any Size</option>
               <option value="small">Small</option>
               <option value="medium">Medium</option>
@@ -207,6 +217,35 @@ function PetFinder() {
       <div className="mt-4">
         {renderPets()}
       </div>
+      
+      {/* Pet Adoption Information */}
+      {searched && pets.length > 0 && (
+        <div className="mt-10 bg-blue-50 p-6 rounded-lg shadow-sm">
+          <h3 className="text-xl font-semibold mb-3">Pet Adoption Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="text-lg font-medium mb-2">Adoption Process</h4>
+              <ol className="list-decimal list-inside space-y-2 text-gray-700">
+                <li>Meet the pet and complete an application</li>
+                <li>Shelter staff may conduct a home check</li>
+                <li>Pay adoption fees (typically $50-$250)</li>
+                <li>Schedule a pick-up date</li>
+                <li>Welcome your new pet home!</li>
+              </ol>
+            </div>
+            <div>
+              <h4 className="text-lg font-medium mb-2">What to Consider</h4>
+              <ul className="list-disc list-inside space-y-2 text-gray-700">
+                <li>Pets are a long-term commitment</li>
+                <li>Consider your living situation and space</li>
+                <li>Factor in ongoing costs for food, healthcare, and supplies</li>
+                <li>Ensure you have time for daily care and attention</li>
+                <li>Research the specific needs of different pet breeds</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
