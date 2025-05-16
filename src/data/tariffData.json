@@ -1,0 +1,305 @@
+{
+  "rates": [
+    {
+      "year": 1789,
+      "rate": 5,
+      "administration": "George Washington",
+      "keyEvent": "Tariff Act of 1789 – first federal tariff (~5%) (estimated)"
+    },
+    {
+      "year": 1816,
+      "rate": 22,
+      "administration": "James Madison",
+      "keyEvent": "Tariff Act of 1816 (Dallas Tariff) raised rates (~20-25%) for revenue and protection (estimated)"
+    },
+    {
+      "year": 1828,
+      "rate": 49,
+      "administration": "John Quincy Adams",
+      "keyEvent": "Tariff of Abominations (1828) – high protective tariff (~49%), sparking nullification tensions"
+    },
+    {
+      "year": 1846,
+      "rate": 17.5,
+      "administration": "James Polk",
+      "keyEvent": "Walker Tariff (1846) dramatically cut rates (free-trade shift, estimated)"
+    },
+    {
+      "year": 1861,
+      "rate": 36,
+      "administration": "James Buchanan",
+      "keyEvent": "Morrill Tariff (1861) – raised duties (~36%) as Civil War loomed"
+    },
+    {
+      "year": 1865,
+      "rate": 48,
+      "administration": "Abraham Lincoln",
+      "keyEvent": "Civil War peak tariffs (~48% on dutiables) to fund war"
+    },
+    {
+      "year": 1890,
+      "rate": 49,
+      "administration": "Benjamin Harrison",
+      "keyEvent": "McKinley Tariff Act (1890) – raised average dutiable rate to ~49%"
+    },
+    {
+      "year": 1913,
+      "rate": 40,
+      "administration": "Woodrow Wilson",
+      "keyEvent": "Underwood Tariff (1913) – lowered rates and introduced income tax (estimated)"
+    },
+    {
+      "year": 1930,
+      "rate": 44.9,
+      "administration": "Herbert Hoover",
+      "keyEvent": "Smoot–Hawley Tariff (1930) – significant increase (~44.9% on dutiable imports)"
+    },
+    {
+      "year": 1932,
+      "rate": 59.1,
+      "administration": "Herbert Hoover",
+      "keyEvent": "Smoot–Hawley peak (1932) – duties on dutiables ~59.1%"
+    },
+    {
+      "year": 1945,
+      "rate": 29,
+      "administration": "Harry S. Truman",
+      "keyEvent": "Post-WWII tariff (~29.0%) as trade resumed"
+    },
+    {
+      "year": 1947,
+      "rate": 20.1,
+      "administration": "Harry S. Truman",
+      "keyEvent": "GATT begins (1947) – tariffs reduced to ~20.1%"
+    },
+    {
+      "year": 1950,
+      "rate": 13.3,
+      "administration": "Harry S. Truman",
+      "keyEvent": "Korean War era tariff (~13.3%)"
+    },
+    {
+      "year": 1962,
+      "rate": 12.3,
+      "administration": "John F. Kennedy",
+      "keyEvent": "Trade Expansion Act (1962) – moderate reduction (~12.3%)"
+    },
+    {
+      "year": 1970,
+      "rate": 10,
+      "administration": "Richard Nixon",
+      "keyEvent": "Tariffs ~10.0% in 1970 (Nixon era)"
+    },
+    {
+      "year": 1975,
+      "rate": 5.8,
+      "administration": "Gerald Ford",
+      "keyEvent": "Tariffs ~5.8% in 1975"
+    },
+    {
+      "year": 1980,
+      "rate": 5.6,
+      "administration": "Jimmy Carter",
+      "keyEvent": "Tariffs ~5.6% in 1980"
+    },
+    {
+      "year": 1984,
+      "rate": 5.5,
+      "administration": "Ronald Reagan",
+      "keyEvent": "Tariffs ~5.5% in 1984"
+    },
+    {
+      "year": 1992,
+      "rate": 5.1,
+      "administration": "George H. W. Bush",
+      "keyEvent": "Tariffs ~5.1% in 1992 (post-Tokyo Round)"
+    },
+    {
+      "year": 2000,
+      "rate": 4.8,
+      "administration": "Bill Clinton",
+      "keyEvent": "Tariffs ~4.8% in 2000 (post-Uruguay Round)"
+    },
+    {
+      "year": 2008,
+      "rate": 4,
+      "administration": "George W. Bush",
+      "keyEvent": "Tariffs ~4.0% in 2008 (Global Financial Crisis era)"
+    },
+    {
+      "year": 2013,
+      "rate": 4.4,
+      "administration": "Barack Obama",
+      "keyEvent": "Tariffs ~4.4% in 2013"
+    },
+    {
+      "year": 2019,
+      "rate": 7.9,
+      "administration": "Donald Trump",
+      "keyEvent": "Tariffs ~7.9% in 2019 (US-China trade war)"
+    },
+    {
+      "year": 2021,
+      "rate": 8.9,
+      "administration": "Joe Biden",
+      "keyEvent": "Tariffs ~8.9% in 2021 (continued Trump-era tariffs)"
+    },
+    {
+      "year": 2025,
+      "rate": 27,
+      "administration": "Donald Trump",
+      "keyEvent": "Projected tariffs ~27.0% in 2025 (second Trump presidency, estimated)"
+    }
+  ],
+  "keyLegislation": [
+    {
+      "year": 1789,
+      "name": "Tariff Act of 1789",
+      "description": "Imposed ~5% duties on most imports as first major tariff law",
+      "impact": "Provided primary revenue for new government and modest protection to U.S. industries"
+    },
+    {
+      "year": 1816,
+      "name": "Tariff Act of 1816 (Dallas Tariff)",
+      "description": "First explicitly protective tariff, raising rates ~20-25%",
+      "impact": "Stimulated domestic manufacturing and generated revenue; fostered sectional tensions"
+    },
+    {
+      "year": 1828,
+      "name": "Tariff of 1828 (Tariff of Abominations)",
+      "description": "High tariff raising average to ~45-49%",
+      "impact": "Protected Northern industry but hurt the South; led to Nullification Crisis and higher consumer prices"
+    },
+    {
+      "year": 1833,
+      "name": "Compromise Tariff of 1833",
+      "description": "Gradual tariff reductions over 1833-1842 to quell nullification",
+      "impact": "Defused South Carolina crisis by slowly lowering rates; stabilized prices and political climate"
+    },
+    {
+      "year": 1846,
+      "name": "Tariff Act of 1846 (Walker Tariff)",
+      "description": "Slashed tariff rates significantly (free-trade oriented)",
+      "impact": "Lowered average rates, boosted imports and revenue; supported economic growth and lowered prices"
+    },
+    {
+      "year": 1861,
+      "name": "Morrill Tariff Act (1861)",
+      "description": "Raised duties sharply to fund Civil War",
+      "impact": "Doubled rates, generating crucial war revenue and protecting U.S. industry; increased consumer prices"
+    },
+    {
+      "year": 1890,
+      "name": "McKinley Tariff Act (1890)",
+      "description": "Imposed very high tariffs (~49%) on many imports",
+      "impact": "Protected U.S. manufacturers but raised consumer prices; contributed to farmer discontent and political backlash"
+    },
+    {
+      "year": 1913,
+      "name": "Underwood Tariff Act (1913)",
+      "description": "Lowered tariff rates and established federal income tax",
+      "impact": "Reduced import duties, lowering prices and expanding trade; shifted government revenue base to income tax"
+    },
+    {
+      "year": 1930,
+      "name": "Smoot–Hawley Tariff Act (1930)",
+      "description": "Massive tariff increases on thousands of goods",
+      "impact": "Contributed to trade wars and deepened the Great Depression; U.S. exports fell sharply, prices rose"
+    },
+    {
+      "year": 1934,
+      "name": "Reciprocal Trade Agreements Act (1934)",
+      "description": "Authorized presidential negotiation of tariff reductions",
+      "impact": "Initiated modern tariff liberalization, reversing some Smoot–Hawley duties; facilitated trade expansion and economic recovery"
+    },
+    {
+      "year": 1947,
+      "name": "General Agreement on Tariffs and Trade (GATT)",
+      "description": "Multilateral agreement reducing tariffs globally after WWII",
+      "impact": "Opened markets and lowered tariffs through successive rounds; spurred postwar trade growth and U.S. GDP expansion"
+    },
+    {
+      "year": 1962,
+      "name": "Trade Expansion Act of 1962",
+      "description": "Authorized tariff cuts (Kennedy Round) to boost trade",
+      "impact": "Led to across-the-board tariff reductions, expanded exports, and slightly lower import prices"
+    },
+    {
+      "year": 1974,
+      "name": "Trade Act of 1974",
+      "description": "Established fast-track negotiation authority for tariffs",
+      "impact": "Facilitated major trade agreements (e.g. Tokyo Round), promoting further tariff cuts and international trade"
+    },
+    {
+      "year": 1994,
+      "name": "North American Free Trade Agreement (NAFTA)",
+      "description": "Eliminated most U.S.–Canada–Mexico tariffs (effective 1994)",
+      "impact": "Greatly increased North American trade flows; modest GDP gains, shifts in jobs across sectors"
+    },
+    {
+      "year": 1995,
+      "name": "World Trade Organization (WTO, 1995)",
+      "description": "Created to enforce global trade rules after Uruguay Round",
+      "impact": "Committed member countries to lower tariffs; helped lower U.S. tariff and import prices and expand trade"
+    }
+  ],
+  "economicImpacts": [
+    {
+      "period": "1789–1820",
+      "tariffTrend": "increasing",
+      "gdpEffect": "3.0%",
+      "employmentEffect": "Growth in manufacturing and infrastructure jobs as tariffs financed government and protected industries",
+      "priceEffect": "Moderate inflation during war years; generally stable prices"
+    },
+    {
+      "period": "1821–1860",
+      "tariffTrend": "increasing",
+      "gdpEffect": "4.0%",
+      "employmentEffect": "Rapid industrial expansion, especially in the North; agricultural employment remained high in the South",
+      "priceEffect": "Generally low inflation, occasional deflation under the gold standard"
+    },
+    {
+      "period": "1861–1865",
+      "tariffTrend": "increasing",
+      "gdpEffect": "2.5%",
+      "employmentEffect": "Manufacturing output surged for war, labor mobilized; many men in military reduced civilian workforce",
+      "priceEffect": "High inflation due to war spending"
+    },
+    {
+      "period": "1866–1913",
+      "tariffTrend": "decreasing",
+      "gdpEffect": "3.5%",
+      "employmentEffect": "Booming industrial and railroad jobs; immigration fueled labor force",
+      "priceEffect": "Low inflation (gold standard); prices generally stable or falling"
+    },
+    {
+      "period": "1929–1939",
+      "tariffTrend": "increasing",
+      "gdpEffect": "-10.0%",
+      "employmentEffect": "Massive unemployment (Great Depression peaked ~25%); slump in manufacturing jobs",
+      "priceEffect": "Deflation early 1930s; moderate inflation late 1930s"
+    },
+    {
+      "period": "1946–1970",
+      "tariffTrend": "decreasing",
+      "gdpEffect": "4.0%",
+      "employmentEffect": "Full employment; strong growth in manufacturing and services",
+      "priceEffect": "Moderate inflation (~3-4% annually)"
+    },
+    {
+      "period": "1971–1993",
+      "tariffTrend": "decreasing",
+      "gdpEffect": "2.5%",
+      "employmentEffect": "Decline in manufacturing jobs; rise in services; expanding international trade",
+      "priceEffect": "High inflation in 1970s (OPEC shocks), moderating to ~3% by 1990s"
+    },
+    {
+      "period": "1994–2025",
+      "tariffTrend": "increasing",
+      "gdpEffect": "1.5%",
+      "employmentEffect": "Globalized supply chains; trade war tensions (2018-2021) caused some job shifts",
+      "priceEffect": "Lower import prices through 2010s; some inflationary pressure on goods prices by 2025"
+    }
+  ],
+  "lastUpdated": "2025-05-16T22:32:20.970Z"
+}

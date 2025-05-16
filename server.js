@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const axios = require('axios');
+const fs = require('fs');
 
 // Load environment variables
 dotenv.config();
@@ -15,7 +15,36 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Pet Finder API proxy
+// Load tariff data from file
+const loadTariffData = () => {
+  try {
+    const data = fs.readFileSync(path.join(__dirname, 'src/data/tariffData.json'), 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    console.error('Error loading tariff data:', error);
+    return { rates: [], keyLegislation: [], economicImpacts: [] };
+  }
+};
+
+// Tariff data route
+app.get('/api/tariff-data', (req, res) => {
+  const tariffData = loadTariffData();
+  
+  // Add overview data
+  const data = {
+    overview: {
+      title: 'U.S. Tariff Rates (1789-Present)',
+      description: 'Historical tariff rates in the United States have varied significantly over time, influenced by economic policies, wars, and global trade relations.'
+    },
+    rates: tariffData.rates || [],
+    keyLegislation: tariffData.keyLegislation || [],
+    economicImpacts: tariffData.economicImpacts || []
+  };
+  
+  res.json(data);
+});
+
+// Pet finder route
 app.get('/api/pets', async (req, res) => {
   try {
     const { zipCode } = req.query;
@@ -24,22 +53,6 @@ app.get('/api/pets', async (req, res) => {
     if (!zipCode || !/^\d{5}$/.test(zipCode)) {
       return res.status(400).json({ error: 'Invalid ZIP code' });
     }
-    
-    // In a real implementation, you would use the Petfinder API
-    // const petfinderRes = await axios.post('https://api.petfinder.com/v2/oauth2/token', {
-    //   grant_type: 'client_credentials',
-    //   client_id: process.env.PETFINDER_API_KEY,
-    //   client_secret: process.env.PETFINDER_API_SECRET
-    // });
-    // 
-    // const token = petfinderRes.data.access_token;
-    // 
-    // const petsRes = await axios.get(`https://api.petfinder.com/v2/animals`, {
-    //   headers: { Authorization: `Bearer ${token}` },
-    //   params: { location: zipCode, type: 'cat', sort: 'distance' }
-    // });
-    // 
-    // res.json(petsRes.data);
     
     // For now, return placeholder data
     const mockPets = [
@@ -93,14 +106,7 @@ app.get('/api/jets-stats', async (req, res) => {
   try {
     const { category = 'passing', type = 'season' } = req.query;
     
-    // In a real implementation, you would use a sports API
-    // const sportsRes = await axios.get(`https://api.sportsdata.io/v3/nfl/stats/json/PlayerSeasonStatsByTeam/NYJ`, {
-    //   headers: { 'Ocp-Apim-Subscription-Key': process.env.SPORTS_API_KEY }
-    // });
-    // 
-    // res.json(sportsRes.data);
-    
-    // For now, return placeholder data
+    // Mock stats data
     const mockStats = {
       passing: {
         season: [
@@ -160,57 +166,6 @@ app.get('/api/jets-stats', async (req, res) => {
   } catch (error) {
     console.error('Jets Stats API Error:', error);
     res.status(500).json({ error: 'Failed to fetch Jets statistics' });
-  }
-});
-
-// Tariff data API
-app.get('/api/tariff-data', (req, res) => {
-  try {
-    const mockTariffData = {
-      overview: {
-        title: 'U.S. Tariff Rates (1789-Present)',
-        description: 'Historical tariff rates in the United States have varied significantly over time, influenced by economic policies, wars, and global trade relations.'
-      },
-      rates: [
-        { year: 1789, rate: 8.0, administration: 'Washington' },
-        { year: 1800, rate: 10.0, administration: 'Adams' },
-        { year: 1820, rate: 40.0, administration: 'Monroe' },
-        { year: 1832, rate: 33.0, administration: 'Jackson' },
-        { year: 1860, rate: 18.0, administration: 'Buchanan' },
-        { year: 1870, rate: 44.0, administration: 'Grant' },
-        { year: 1890, rate: 48.0, administration: 'Harrison' },
-        { year: 1910, rate: 21.0, administration: 'Taft' },
-        { year: 1922, rate: 38.0, administration: 'Harding' },
-        { year: 1930, rate: 59.0, administration: 'Hoover' },
-        { year: 1940, rate: 37.0, administration: 'Roosevelt' },
-        { year: 1950, rate: 13.0, administration: 'Truman' },
-        { year: 1970, rate: 10.0, administration: 'Nixon' },
-        { year: 1990, rate: 5.0, administration: 'Bush' },
-        { year: 2000, rate: 3.0, administration: 'Clinton' },
-        { year: 2010, rate: 3.5, administration: 'Obama' },
-        { year: 2020, rate: 13.0, administration: 'Trump' },
-        { year: 2022, rate: 7.5, administration: 'Biden' }
-      ],
-      keyLegislation: [
-        { year: 1789, name: 'Tariff Act of 1789', description: 'First major tariff law in American history.' },
-        { year: 1828, name: 'Tariff of Abominations', description: 'Highly protective tariff that favored Northern manufacturing interests.' },
-        { year: 1832, name: 'Tariff of 1832', description: 'Reduced duties from the 1828 tariff but maintained protectionism.' },
-        { year: 1857, name: 'Tariff of 1857', description: 'Lowered tariff rates to pre-1846 levels.' },
-        { year: 1861, name: 'Morrill Tariff', description: 'Raised rates to protect Northern industries during the Civil War.' },
-        { year: 1890, name: 'McKinley Tariff', description: 'Raised average duties to nearly 50%, highest peacetime levels.' },
-        { year: 1922, name: 'Fordney-McCumber Tariff', description: 'Raised tariffs after World War I to protect domestic industries.' },
-        { year: 1930, name: 'Smoot-Hawley Tariff', description: 'Raised tariffs during the Great Depression, contributed to trade wars.' },
-        { year: 1934, name: 'Reciprocal Trade Agreements Act', description: 'Authorized president to negotiate tariff reductions.' },
-        { year: 1947, name: 'GATT Formation', description: 'Created the General Agreement on Tariffs and Trade, reducing global tariffs.' },
-        { year: 1994, name: 'NAFTA Implementation', description: 'Eliminated most tariffs between the U.S., Canada, and Mexico.' },
-        { year: 2018, name: 'Section 232 Tariffs', description: 'Imposed tariffs on steel and aluminum imports citing national security.' }
-      ]
-    };
-    
-    res.json(mockTariffData);
-  } catch (error) {
-    console.error('Tariff Data API Error:', error);
-    res.status(500).json({ error: 'Failed to fetch tariff data' });
   }
 });
 
