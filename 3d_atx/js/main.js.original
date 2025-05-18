@@ -1,0 +1,1111 @@
+// Main application code for 3D ATX
+document.addEventListener('DOMContentLoaded', () => {
+    // Application Configuration
+    const CONFIG = {
+        fog: {
+            colorNight: 0x0a1025,
+            colorDay: 0x87ceeb,
+            density: 0.001
+        },
+        camera: {
+            fov: 45,
+            near: 1,
+            far: 5000,
+            initialPosition: new THREE.Vector3(0, 100, 300),
+            minZoom: 0.5,
+            zoomIncrement: 0.1
+        },
+        controls: {
+            dampingFactor: 0.05,
+            rotateSpeed: 0.7,
+            panSpeed: 0.7,
+            minDistance: 50,
+            maxDistance: 500,
+            maxPolarAngle: Math.PI / 2,
+            initialTarget: new THREE.Vector3(0, 40, 0)
+        },
+        lights: {
+            ambientNightIntensity: 0.2,
+            ambientDayIntensity: 0.7,
+            sunNightIntensity: 0.1,
+            sunDayIntensity: 1,
+            shadowMapSize: 2048
+        },
+        postProcessing: {
+            bloom: {
+                strength: 0.5,
+                radius: 0.4,
+                threshold: 0.85,
+                nightStrength: 1.0,
+                dayStrength: 0.1
+            },
+            ssao: {
+                kernelRadius: 16,
+                minDistance: 0.005,
+                maxDistance: 0.1,
+                mobileKernelRadius: 8
+            }
+        },
+        skyDome: {
+            topColorDay: 0x0077ff,
+            bottomColorDay: 0xffffff,
+            topColorNight: 0x0a1025,
+            bottomColorNight: 0x2a2f50,
+            offset: 400,
+            exponent: 0.6
+        },
+        water: {
+            colorDay: 0x1E65A7,
+            colorNight: 0x0a1a30,
+            reflectivityDay: 0.7,
+            reflectivityNight: 0.9,
+            distortion: 0.03
+        },
+        landmarks: {
+            markerColor: 0xffffff,
+            markerOpacity: 0.7,
+            pulseColor: 0x64c8e6,
+            pulseOpacity: 0.4,
+            pulseInitialScale: 1.0,
+            pulseTargetScale: 1.5,
+            pulseSpeed: 0.02
+        },
+        animationSpeeds: {
+            cameraTransition: 2, // seconds
+            uiFade: 0.5 // seconds
+        },
+        notifications: {
+            defaultDuration: 3000 // ms
+        },
+        loadingScreen: {
+            finalizeDelay: 500 // ms
+        }
+    };
+
+    // Application state
+    const state = {
+        isLoading: true,
+        timeOfDay: 0.3, // 0-1 range (0 = night, 0.25 = dawn, 0.5 = day, 0.75 = dusk, 1 = night)
+        activeView: 'downtown',
+        activeLayers: {
+            traffic: false,
+            zoning: false,
+            events: false,
+            parks: false
+        },
+        landmarks: [
+            {
+                id: 'frost',
+                name: 'Frost Bank Tower',
+                description: 'Iconic Austin skyscraper with its distinctive owl-like appearance, standing 515 feet tall.',
+                position: new THREE.Vector3(-50, 120, -30),
+                details: 'Completed in 2004, the Frost Bank Tower was Austin\'s first high-rise building constructed after the September 11 attacks. Its unique design features a crown that resembles an owl when viewed from certain angles.',
+                image: 'assets/images/landmarks/frost-bank.jpg'
+            },
+            {
+                id: 'austonian',
+                name: 'The Austonian',
+                description: 'The tallest building in Austin at 683 feet, offering luxury condominiums with panoramic views.',
+                position: new THREE.Vector3(30, 160, 40),
+                details: 'Completed in 2010, The Austonian is a residential skyscraper that held the title of tallest building in Austin until 2018. It features 56 floors of luxury condominiums and penthouses.',
+                image: 'assets/images/landmarks/austonian.jpg'
+            },
+            {
+                id: 'congress',
+                name: 'Congress Avenue Bridge',
+                description: 'Home to the largest urban bat colony in North America, with up to 1.5 million bats emerging at dusk.',
+                position: new THREE.Vector3(150, 30, 20),
+                details: 'The Ann W. Richards Congress Avenue Bridge houses the largest urban bat colony in North America. Each evening from late March to early November, the Mexican free-tailed bats emerge from under the bridge to feed, creating a spectacular natural display.',
+                image: 'assets/images/landmarks/congress-bridge.jpg'
+            },
+            {
+                id: 'capitol',
+                name: 'Texas State Capitol',
+                description: 'The iconic seat of Texas government, built in 1888 with distinctive pink granite.',
+                position: new THREE.Vector3(0, 85, -150),
+                details: 'The Texas State Capitol, completed in 1888, is the oldest surviving state office structure and was added to the National Register of Historic Places in 1970. It stands 14 feet taller than the U.S. Capitol in Washington, D.C.',
+                image: 'assets/images/landmarks/capitol.jpg'
+            }
+        ],
+        urlParams: {
+            view: null,
+            landmark: null
+        }
+    };
+
+    // DOM elements
+    const elements = {
+        loadingScreen: document.getElementById('loading-screen'),
+        loadingProgress: document.getElementById('loading-progress'),
+        loadingStatus: document.getElementById('loading-status'),
+        sceneContainer: document.getElementById('scene-container'),
+        timeSlider: document.getElementById('time-slider'),
+        zoomIn: document.getElementById('zoom-in'),
+        zoomOut: document.getElementById('zoom-out'),
+        resetView: document.getElementById('reset-view'),
+        viewButtons: document.querySelectorAll('.view-button'),
+        toggleButtons: document.querySelectorAll('.toggle-input'),
+        locationTitle: document.getElementById('location-title'),
+        locationDetails: document.getElementById('location-details'),
+        weatherWidget: document.querySelector('.weather-data'),
+        closePanel: document.getElementById('close-panel'),
+        infoPanel: document.querySelector('.info-panel'),
+        notification: document.getElementById('notification'),
+        notificationContent: document.querySelector('.notification-content'),
+        notificationClose: document.querySelector('.notification-close'),
+        modal: document.getElementById('modal'),
+        modalContent: document.getElementById('modal-content'),
+        modalPrimaryAction: document.getElementById('modal-primary-action'),
+        modalCloseButtons: document.querySelectorAll('[data-close-modal]'),
+        shareView: document.getElementById('share-view'),
+        startTour: document.getElementById('start-tour'),
+        mobileMenuToggle: document.getElementById('mobile-menu-toggle')
+    };
+
+    // Three.js components
+    let scene, camera, renderer, controls;
+    let cityGroup, skyDome, sunLight, ambientLight, waterMesh;
+    let composer, bloomPass, toneMappingPass, ssaoPass;
+    let trafficGroup, birdsGroup, landmarkMarkers = [];
+    let raycaster, mouse;
+
+    // Camera positions for predefined views
+    const cameraPositions = {
+        'downtown': { position: new THREE.Vector3(0, 100, 200), target: new THREE.Vector3(0, 50, 0) },
+        'capitol': { position: new THREE.Vector3(0, 100, -200), target: new THREE.Vector3(0, 50, -100) },
+        'ladybird': { position: new THREE.Vector3(200, 80, 100), target: new THREE.Vector3(0, 40, 0) },
+        'ut': { position: new THREE.Vector3(-150, 60, -150), target: new THREE.Vector3(-75, 30, -75) }
+    };
+
+    // Initialize the application
+    init();
+
+    // Main initialization function
+    function init() {
+        loadURLParams();
+        setupScene();
+        setupEventListeners();
+        loadAssets();
+        // simulateLoading(); // For development/testing without assets
+    }
+
+    // Set up Three.js scene
+    function setupScene() {
+        scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(CONFIG.fog.colorDay, CONFIG.fog.density);
+
+        const aspect = elements.sceneContainer.clientWidth / elements.sceneContainer.clientHeight;
+        camera = new THREE.PerspectiveCamera(CONFIG.camera.fov, aspect, CONFIG.camera.near, CONFIG.camera.far);
+        camera.position.copy(CONFIG.camera.initialPosition);
+        camera.lookAt(scene.position);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(elements.sceneContainer.clientWidth, elements.sceneContainer.clientHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.outputEncoding = THREE.sRGBEncoding;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        elements.sceneContainer.appendChild(renderer.domElement);
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = CONFIG.controls.dampingFactor;
+        controls.rotateSpeed = CONFIG.controls.rotateSpeed;
+        controls.panSpeed = CONFIG.controls.panSpeed;
+        controls.minDistance = CONFIG.controls.minDistance;
+        controls.maxDistance = CONFIG.controls.maxDistance;
+        controls.maxPolarAngle = CONFIG.controls.maxPolarAngle;
+        controls.target.copy(CONFIG.controls.initialTarget);
+
+        setupLights();
+        raycaster = new THREE.Raycaster();
+        mouse = new THREE.Vector2();
+        setupPostProcessing();
+        initSkyDome();
+        animate();
+    }
+
+    function setupLights() {
+        ambientLight = new THREE.AmbientLight(0x404050, CONFIG.lights.ambientDayIntensity);
+        scene.add(ambientLight);
+
+        sunLight = new THREE.DirectionalLight(0xffffff, CONFIG.lights.sunDayIntensity);
+        sunLight.position.set(100, 200, 100);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = CONFIG.lights.shadowMapSize;
+        sunLight.shadow.mapSize.height = CONFIG.lights.shadowMapSize;
+        sunLight.shadow.camera.near = 0.5;
+        sunLight.shadow.camera.far = 500;
+        sunLight.shadow.camera.left = -200;
+        sunLight.shadow.camera.right = 200;
+        sunLight.shadow.camera.top = 200;
+        sunLight.shadow.camera.bottom = -200;
+        scene.add(sunLight);
+
+        updateLighting();
+    }
+
+    function setupPostProcessing() {
+        composer = new THREE.EffectComposer(renderer);
+        composer.addPass(new THREE.RenderPass(scene, camera));
+
+        bloomPass = new THREE.UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            CONFIG.postProcessing.bloom.strength,
+            CONFIG.postProcessing.bloom.radius,
+            CONFIG.postProcessing.bloom.threshold
+        );
+        composer.addPass(bloomPass);
+
+        toneMappingPass = new THREE.ShaderPass(THREE.ToneMappingShader);
+        toneMappingPass.uniforms.tDiffuse.value = 1.0; // This might be an old way; toneMapping is usually on renderer
+        // composer.addPass(toneMappingPass); // Often not needed if renderer.toneMapping is set
+
+        ssaoPass = new THREE.SSAOPass(scene, camera, window.innerWidth, window.innerHeight);
+        ssaoPass.kernelRadius = CONFIG.postProcessing.ssao.kernelRadius;
+        ssaoPass.minDistance = CONFIG.postProcessing.ssao.minDistance;
+        ssaoPass.maxDistance = CONFIG.postProcessing.ssao.maxDistance;
+        composer.addPass(ssaoPass);
+
+        updatePostProcessingQuality();
+    }
+
+    function initSkyDome() {
+        const skyGeometry = new THREE.SphereGeometry(2000, 32, 32);
+        // Shader code remains the same as it's quite specific.
+        const skyMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                topColor: { value: new THREE.Color(CONFIG.skyDome.topColorDay) },
+                bottomColor: { value: new THREE.Color(CONFIG.skyDome.bottomColorDay) },
+                offset: { value: CONFIG.skyDome.offset },
+                exponent: { value: CONFIG.skyDome.exponent }
+            },
+            vertexShader: `
+                varying vec3 vWorldPosition;
+                void main() {
+                    vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+                    vWorldPosition = worldPosition.xyz;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 topColor;
+                uniform vec3 bottomColor;
+                uniform float offset;
+                uniform float exponent;
+                varying vec3 vWorldPosition;
+                void main() {
+                    float h = normalize(vWorldPosition + offset).y;
+                    gl_FragColor = vec4(mix(bottomColor, topColor, max(pow(max(h, 0.0), exponent), 0.0)), 1.0);
+                }
+            `,
+            side: THREE.BackSide
+        });
+        skyDome = new THREE.Mesh(skyGeometry, skyMaterial);
+        scene.add(skyDome);
+    }
+
+    function loadAssets() {
+        updateLoadingStatus('Initializing asset loading...', 0.05);
+        const loadingManager = new THREE.LoadingManager();
+
+        loadingManager.onProgress = (url, itemsLoaded, itemsTotal) => {
+            const progress = itemsLoaded / itemsTotal;
+            updateLoadingStatus(`Loading assets (${itemsLoaded}/${itemsTotal})`, progress);
+        };
+
+        loadingManager.onLoad = () => {
+            updateLoadingStatus('Finalizing scene...', 0.95);
+            setTimeout(() => {
+                state.isLoading = false;
+                elements.loadingScreen.classList.add('hidden');
+                navigateToView(state.activeView); // Ensure view is set based on URL or default
+
+                // If a landmark was specified in URL, show its info now that assets are loaded
+                if (state.urlParams.landmark) {
+                    showLandmarkInfo(state.urlParams.landmark);
+                }
+
+            }, CONFIG.loadingScreen.finalizeDelay);
+        };
+
+        loadingManager.onError = (url) => {
+            console.error('Error loading asset:', url);
+            showNotification('Failed to load some assets. The experience may be incomplete.', 'error');
+        };
+
+        cityGroup = new THREE.Group();
+        scene.add(cityGroup);
+        createProceduralCity(loadingManager); // Pass manager if it loads assets
+        createLandmarkMarkers();
+    }
+
+    function simulateLoading() {
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += 0.1;
+            if (progress >= 1) {
+                clearInterval(interval);
+                updateLoadingStatus('Finalizing scene...', 1);
+                setTimeout(() => {
+                    state.isLoading = false;
+                    elements.loadingScreen.classList.add('hidden');
+                    navigateToView(state.activeView);
+                     if (state.urlParams.landmark) {
+                        showLandmarkInfo(state.urlParams.landmark);
+                    }
+                }, CONFIG.loadingScreen.finalizeDelay);
+            } else {
+                updateLoadingStatus(`Simulating asset loading...`, progress);
+            }
+        }, 400);
+        createProceduralCity();
+        createLandmarkMarkers();
+    }
+
+    function updateLoadingStatus(message, progress) {
+        elements.loadingStatus.textContent = message;
+        elements.loadingProgress.style.width = `${progress * 100}%`;
+    }
+
+    function createProceduralCity(loadingManager) { // loadingManager might be unused if procedural assets are not loaded
+        updateLoadingStatus('Generating Austin cityscape...', 0.2);
+        const groundGeometry = new THREE.PlaneGeometry(2000, 2000);
+        const groundMaterial = new THREE.MeshStandardMaterial({
+            color: 0x145E31,
+            roughness: 0.8,
+            metalness: 0.2
+        });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        cityGroup.add(ground);
+
+        createLadyBirdLake();
+        createDowntownBuildings();
+        createTraffic();
+        createBirds();
+        updateLoadingStatus('Austin cityscape generated!', 0.8);
+    }
+
+    function createLadyBirdLake() {
+        const waterGeometry = new THREE.PlaneGeometry(800, 300, 32, 32);
+        // Water shader remains the same
+        const waterMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                time: { value: 0 },
+                color: { value: new THREE.Color(CONFIG.water.colorDay) },
+                sunDir: { value: new THREE.Vector3(0.5, 0.8, 0.0).normalize() },
+                sunColor: { value: new THREE.Color(0xffffff) },
+                waterDistortion: { value: CONFIG.water.distortion },
+                reflectivity: { value: CONFIG.water.reflectivityDay }
+            },
+            vertexShader: `
+                uniform float time;
+                uniform float waterDistortion;
+                varying vec2 vUv;
+                varying vec3 vPosition;
+                varying vec3 vNormal;
+                
+                vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+                vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+                vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
+                
+                float snoise(vec2 v) {
+                    const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
+                    vec2 i  = floor(v + dot(v, C.yy));
+                    vec2 x0 = v - i + dot(i, C.xx);
+                    vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+                    vec4 x12 = x0.xyxy + C.xxzz;
+                    x12.xy -= i1;
+                    i = mod289(i);
+                    vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0));
+                    vec3 m = max(0.5 - vec3(dot(x0, x0), dot(x12.xy, x12.xy), dot(x12.zw, x12.zw)), 0.0);
+                    m = m*m*m*m;
+                    vec3 x = 2.0 * fract(p * C.www) - 1.0;
+                    vec3 h = abs(x) - 0.5;
+                    vec3 ox = floor(x + 0.5);
+                    vec3 a0 = x - ox;
+                    m *= 1.79284291400159 - 0.85373472095314 * (a0*a0 + h*h);
+                    vec3 g;
+                    g.x  = a0.x  * x0.x  + h.x  * x0.y;
+                    g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+                    return 130.0 * dot(m, g);
+                }
+                
+                void main() {
+                    vUv = uv;
+                    float noise1 = snoise(vec2(uv.x * 5.0 + time * 0.1, uv.y * 5.0 + time * 0.2)) * waterDistortion;
+                    float noise2 = snoise(vec2(uv.x * 10.0 - time * 0.1, uv.y * 10.0)) * waterDistortion * 0.5;
+                    vec3 pos = position;
+                    pos.z += noise1 + noise2;
+                    
+                    vPosition = pos;
+                    vNormal = normalize(vec3(0.0, 0.0, 1.0) + vec3(noise1, noise2, 0.0) * 2.0);
+                    
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 color;
+                uniform vec3 sunDir;
+                uniform vec3 sunColor;
+                uniform float reflectivity;
+                varying vec2 vUv;
+                varying vec3 vPosition;
+                varying vec3 vNormal;
+                
+                void main() {
+                    vec3 waterColor = color;
+                    vec3 viewDir = normalize(cameraPosition - vPosition);
+                    float fresnel = reflectivity * pow(1.0 - max(0.0, dot(viewDir, vNormal)), 5.0);
+                    float specular = pow(max(0.0, dot(reflect(-sunDir, vNormal), viewDir)), 100.0) * 0.5;
+                    vec3 finalColor = mix(waterColor, sunColor, specular + fresnel * 0.2);
+                    gl_FragColor = vec4(finalColor, 0.9);
+                }
+            `,
+            transparent: true
+        });
+        waterMesh = new THREE.Mesh(waterGeometry, waterMaterial);
+        waterMesh.rotation.x = -Math.PI / 2;
+        waterMesh.position.set(0, 1, 150);
+        waterMesh.receiveShadow = true;
+        cityGroup.add(waterMesh);
+    }
+
+    function createDowntownBuildings() {
+        const buildingStyles = [
+            { heightMin: 50, heightMax: 150, width: 30, depth: 30, color: 0x8c92ac },
+            { heightMin: 30, heightMax: 80, width: 25, depth: 25, color: 0xd2b48c },
+            { heightMin: 20, heightMax: 60, width: 20, depth: 40, color: 0xa3785d }
+        ];
+        for (let x = -300; x <= 300; x += 60) {
+            for (let z = -300; z <= 200; z += 60) {
+                if (z > 0 && z < 300 && x > -400 && x < 400) continue;
+                const offsetX = (Math.random() - 0.5) * 15;
+                const offsetZ = (Math.random() - 0.5) * 15;
+                if (Math.random() < 0.3) continue;
+                const style = buildingStyles[Math.floor(Math.random() * buildingStyles.length)];
+                createBuilding(x + offsetX, z + offsetZ, style.width, style.depth, style.heightMin + Math.random() * (style.heightMax - style.heightMin), style.color);
+            }
+        }
+        createIconicBuilding(-50, -30, 40, 40, 150, 0x8faee0, (building) => {
+            const topGeometry = new THREE.ConeGeometry(30, 40, 4);
+            const topMaterial = new THREE.MeshStandardMaterial({ color: 0xa1b5d6 });
+            const top = new THREE.Mesh(topGeometry, topMaterial);
+            top.position.y = 75;
+            top.rotation.y = Math.PI / 4;
+            building.add(top);
+            building.userData = { landmark: 'frost' };
+        });
+        createIconicBuilding(30, 40, 35, 35, 180, 0x8eb4cc, (building) => {
+            building.userData = { landmark: 'austonian' };
+        });
+        createIconicBuilding(0, -150, 60, 100, 80, 0xf0e4d3, (building) => {
+            const domeGeometry = new THREE.SphereGeometry(25, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+            const domeMaterial = new THREE.MeshStandardMaterial({ color: 0xf1ebd8 });
+            const dome = new THREE.Mesh(domeGeometry, domeMaterial);
+            dome.position.y = 40;
+            building.add(dome);
+            building.userData = { landmark: 'capitol' };
+        });
+        createBridge(150, 20, 150, 40, (bridge) => {
+            bridge.userData = { landmark: 'congress' };
+        });
+    }
+
+    function createBuilding(x, z, width, depth, height, color) {
+        const buildingGeometry = new THREE.BoxGeometry(width, height, depth);
+        const buildingMaterial = new THREE.MeshStandardMaterial({ color, roughness: 0.7, metalness: 0.3 });
+        const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
+        building.position.set(x, height / 2, z);
+        building.rotation.y = Math.random() * Math.PI * 2;
+        building.castShadow = true;
+        building.receiveShadow = true;
+        cityGroup.add(building);
+        // Note: If many similar buildings, consider InstancedMesh for performance.
+        // Remember to dispose of geometry and material if building is removed:
+        // buildingGeometry.dispose(); buildingMaterial.dispose();
+        return building;
+    }
+
+    function createIconicBuilding(x, z, width, depth, height, color, customizer) {
+        const building = createBuilding(x, z, width, depth, height, color);
+        if (customizer) customizer(building);
+        return building;
+    }
+
+    function createBridge(x, z, length, width, customizer) {
+        const bridgeGeometry = new THREE.BoxGeometry(width, 10, length);
+        const bridgeMaterial = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.7, metalness: 0.3 });
+        const bridge = new THREE.Mesh(bridgeGeometry, bridgeMaterial);
+        bridge.position.set(x, 5, z);
+        const columnGeometry = new THREE.CylinderGeometry(5, 5, 30, 8);
+        const columnMaterial = new THREE.MeshStandardMaterial({ color: 0x777777, roughness: 0.7, metalness: 0.3 });
+        for (let i = -length / 2 + 20; i <= length / 2 - 20; i += 40) {
+            const column = new THREE.Mesh(columnGeometry, columnMaterial);
+            column.position.set(0, -15, i);
+            column.castShadow = true;
+            bridge.add(column);
+        }
+        bridge.castShadow = true;
+        bridge.receiveShadow = true;
+        if (customizer) customizer(bridge);
+        cityGroup.add(bridge);
+        // Remember to dispose geometries and materials if removed.
+        return bridge;
+    }
+
+    function createTraffic() {
+        trafficGroup = new THREE.Group();
+        cityGroup.add(trafficGroup);
+        for (let i = 0; i < 30; i++) {
+            const size = Math.random() * 5 + 5;
+            const carGeometry = new THREE.BoxGeometry(size, size / 2, size * 2);
+            const carMaterial = new THREE.MeshStandardMaterial({
+                color: new THREE.Color(Math.random(), Math.random(), Math.random()),
+                roughness: 0.7,
+                metalness: 0.3
+            });
+            const car = new THREE.Mesh(carGeometry, carMaterial);
+            if (Math.random() > 0.5) {
+                car.position.set((Math.random() - 0.5) * 1000, size / 4, -250 + Math.floor(Math.random() * 10) * 50);
+                car.rotation.y = Math.PI / 2;
+                car.userData = { speed: Math.random() * 0.5 + 0.5, movingOnX: true };
+            } else {
+                car.position.set(-250 + Math.floor(Math.random() * 10) * 50, size / 4, (Math.random() - 0.5) * 1000);
+                car.userData = { speed: Math.random() * 0.5 + 0.5, movingOnX: false };
+            }
+            car.castShadow = true;
+            // car.receiveShadow = true; // Cars are small, might not need to receive shadows
+            trafficGroup.add(car);
+            // Note: Consider InstancedMesh for cars.
+        }
+    }
+
+    function createBirds() {
+        birdsGroup = new THREE.Group();
+        scene.add(birdsGroup);
+        for (let i = 0; i < 20; i++) {
+            const birdGeometry = new THREE.ConeGeometry(2, 8, 4);
+            const birdMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 }); // Basic material for performance
+            const bird = new THREE.Mesh(birdGeometry, birdMaterial);
+            bird.position.set((Math.random() - 0.5) * 500, 200 + Math.random() * 100, (Math.random() - 0.5) * 500);
+            bird.rotation.x = Math.PI / 2;
+            bird.userData = {
+                speed: Math.random() * 0.5 + 0.5,
+                rotationSpeed: (Math.random() - 0.5) * 0.02,
+                amplitude: Math.random() * 0.5 + 0.5,
+                frequency: Math.random() * 0.02 + 0.01,
+                phase: Math.random() * Math.PI * 2
+            };
+            birdsGroup.add(bird);
+            // Note: Consider InstancedMesh for birds if many are needed.
+        }
+    }
+
+    function createLandmarkMarkers() {
+        const markerGeometry = new THREE.SphereGeometry(3, 16, 16);
+        const markerMaterial = new THREE.MeshBasicMaterial({
+            color: CONFIG.landmarks.markerColor,
+            transparent: true,
+            opacity: CONFIG.landmarks.markerOpacity
+        });
+
+        const pulseGeometry = new THREE.SphereGeometry(4, 16, 16);
+        const pulseMaterial = new THREE.MeshBasicMaterial({
+            color: CONFIG.landmarks.pulseColor,
+            transparent: true,
+            opacity: CONFIG.landmarks.pulseOpacity
+        });
+
+        state.landmarks.forEach(landmark => {
+            const marker = new THREE.Mesh(markerGeometry.clone(), markerMaterial.clone()); // Clone for unique material properties if needed later
+            marker.position.copy(landmark.position);
+            marker.userData = {
+                isLandmark: true,
+                landmarkId: landmark.id
+            };
+
+            const pulse = new THREE.Mesh(pulseGeometry.clone(), pulseMaterial.clone());
+            marker.add(pulse);
+            pulse.userData = {
+                initialScale: CONFIG.landmarks.pulseInitialScale,
+                targetScale: CONFIG.landmarks.pulseTargetScale,
+                speed: CONFIG.landmarks.pulseSpeed,
+                direction: 1
+            };
+
+            cityGroup.add(marker);
+            landmarkMarkers.push(marker);
+        });
+        // Note: Geometries are simple, but if they become complex and are identical,
+        // share them instead of cloning. Materials are cloned here for potential individual modifications,
+        // but if always identical, they can also be shared.
+    }
+
+    function setupEventListeners() {
+        window.addEventListener('resize', onWindowResize);
+        elements.zoomIn.addEventListener('click', zoomIn);
+        elements.zoomOut.addEventListener('click', zoomOut);
+        elements.resetView.addEventListener('click', resetView);
+        elements.viewButtons.forEach(button => {
+            button.addEventListener('click', () => navigateToView(button.getAttribute('data-view')));
+        });
+        elements.timeSlider.addEventListener('input', (e) => {
+            state.timeOfDay = parseFloat(e.target.value);
+            updateLighting();
+        });
+        elements.toggleButtons.forEach(toggle => {
+            toggle.addEventListener('change', (e) => {
+                const layer = e.target.id.replace('toggle-', '');
+                state.activeLayers[layer] = e.target.checked;
+                updateLayers();
+            });
+        });
+        elements.closePanel.addEventListener('click', () => elements.infoPanel.classList.remove('visible'));
+        elements.shareView.addEventListener('click', shareView);
+        elements.startTour.addEventListener('click', startTour);
+        elements.modalCloseButtons.forEach(button => button.addEventListener('click', closeModal));
+        elements.notificationClose.addEventListener('click', () => elements.notification.setAttribute('hidden', 'true'));
+        elements.mobileMenuToggle.addEventListener('click', toggleMobileMenu);
+        renderer.domElement.addEventListener('click', onSceneClick);
+        renderer.domElement.addEventListener('mousemove', onSceneMouseMove); // Consider throttling if complex
+        elements.sceneContainer.addEventListener('keydown', handleKeyboardNavigation);
+    }
+
+    function onWindowResize() {
+        camera.aspect = elements.sceneContainer.clientWidth / elements.sceneContainer.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(elements.sceneContainer.clientWidth, elements.sceneContainer.clientHeight);
+        composer.setSize(elements.sceneContainer.clientWidth, elements.sceneContainer.clientHeight);
+    }
+
+    function zoomIn() {
+        gsap.to(camera, {
+            zoom: camera.zoom + CONFIG.camera.zoomIncrement,
+            duration: CONFIG.animationSpeeds.uiFade,
+            onUpdate: () => camera.updateProjectionMatrix()
+        });
+    }
+
+    function zoomOut() {
+        gsap.to(camera, {
+            zoom: Math.max(CONFIG.camera.minZoom, camera.zoom - CONFIG.camera.zoomIncrement),
+            duration: CONFIG.animationSpeeds.uiFade,
+            onUpdate: () => camera.updateProjectionMatrix()
+        });
+    }
+
+    function resetView() {
+        navigateToView(state.activeView);
+    }
+
+    function navigateToView(viewName) {
+        if (!cameraPositions[viewName]) return;
+        state.activeView = viewName;
+        elements.viewButtons.forEach(button => {
+            button.classList.toggle('active', button.getAttribute('data-view') === viewName);
+        });
+        const { position, target } = cameraPositions[viewName];
+        gsap.to(camera.position, { ...position, duration: CONFIG.animationSpeeds.cameraTransition, ease: "power2.inOut" });
+        gsap.to(controls.target, { ...target, duration: CONFIG.animationSpeeds.cameraTransition, ease: "power2.inOut" });
+    }
+
+    function getLightingParams(time) {
+        // Helper to avoid large if/else in updateLighting
+        // Returns [skyColor, sunIntensity, ambientIntensity, sunColor, ambientColor, bloomStrength]
+        if (time < 0.2) { // Night
+            return [new THREE.Color(0x0a1025), CONFIG.lights.sunNightIntensity, CONFIG.lights.ambientNightIntensity, new THREE.Color(0xc9d5ff), new THREE.Color(0x2a2f50), CONFIG.postProcessing.bloom.nightStrength];
+        } else if (time < 0.3) { // Dawn
+            const t = (time - 0.2) / 0.1;
+            return [
+                new THREE.Color().lerpColors(new THREE.Color(0x0a1025), new THREE.Color(0x6b3d66), t),
+                THREE.MathUtils.lerp(CONFIG.lights.sunNightIntensity, 0.5, t),
+                THREE.MathUtils.lerp(CONFIG.lights.ambientNightIntensity, 0.5, t),
+                new THREE.Color(0xffb07f), new THREE.Color(0x2a3b50),
+                THREE.MathUtils.lerp(CONFIG.postProcessing.bloom.nightStrength, 0.5, t)
+            ];
+        } else if (time < 0.4) { // Dawn to Day
+            const t = (time - 0.3) / 0.1;
+            return [
+                new THREE.Color().lerpColors(new THREE.Color(0x6b3d66), new THREE.Color(CONFIG.fog.colorDay), t),
+                THREE.MathUtils.lerp(0.5, CONFIG.lights.sunDayIntensity, t),
+                THREE.MathUtils.lerp(0.5, CONFIG.lights.ambientDayIntensity, t),
+                new THREE.Color(0xffffff), new THREE.Color(0x404050),
+                THREE.MathUtils.lerp(0.5, CONFIG.postProcessing.bloom.dayStrength, t)
+            ];
+        } else if (time < 0.7) { // Day
+            return [new THREE.Color(CONFIG.fog.colorDay), CONFIG.lights.sunDayIntensity, CONFIG.lights.ambientDayIntensity, new THREE.Color(0xffffff), new THREE.Color(0x404050), CONFIG.postProcessing.bloom.dayStrength];
+        } else if (time < 0.8) { // Day to Dusk
+            const t = (time - 0.7) / 0.1;
+            return [
+                new THREE.Color().lerpColors(new THREE.Color(CONFIG.fog.colorDay), new THREE.Color(0xff9966), t),
+                THREE.MathUtils.lerp(CONFIG.lights.sunDayIntensity, 0.5, t),
+                THREE.MathUtils.lerp(CONFIG.lights.ambientDayIntensity, 0.5, t),
+                new THREE.Color(0xffca99), new THREE.Color(0x404050),
+                THREE.MathUtils.lerp(CONFIG.postProcessing.bloom.dayStrength, 0.5, t)
+            ];
+        } else if (time < 0.9) { // Dusk to Night
+            const t = (time - 0.8) / 0.1;
+            return [
+                new THREE.Color().lerpColors(new THREE.Color(0xff9966), new THREE.Color(0x0a1025), t),
+                THREE.MathUtils.lerp(0.5, CONFIG.lights.sunNightIntensity, t),
+                THREE.MathUtils.lerp(0.5, CONFIG.lights.ambientNightIntensity, t),
+                new THREE.Color(0xffb07f), new THREE.Color(0x2a3b50),
+                THREE.MathUtils.lerp(0.5, CONFIG.postProcessing.bloom.nightStrength, t)
+            ];
+        } else { // Night (repeat of < 0.2)
+            return [new THREE.Color(0x0a1025), CONFIG.lights.sunNightIntensity, CONFIG.lights.ambientNightIntensity, new THREE.Color(0xc9d5ff), new THREE.Color(0x2a2f50), CONFIG.postProcessing.bloom.nightStrength];
+        }
+    }
+
+
+    function updateLighting() {
+        const angle = (state.timeOfDay * 2 - 0.5) * Math.PI; // Sun position calculation
+        sunLight.position.set(Math.cos(angle) * 200, Math.sin(angle) * 200, 100);
+
+        const [skyColor, sunIntensity, ambientIntensity, sunCol, ambientCol, bloomStrengthVal] = getLightingParams(state.timeOfDay);
+
+        sunLight.intensity = sunIntensity;
+        ambientLight.intensity = ambientIntensity;
+        sunLight.color.copy(sunCol);
+        ambientLight.color.copy(ambientCol);
+        scene.fog.color.copy(skyColor);
+        scene.background = skyColor;
+        bloomPass.strength = bloomStrengthVal;
+
+
+        if (skyDome && skyDome.material.uniforms) {
+            if (state.timeOfDay < 0.2 || state.timeOfDay > 0.8) { // Night
+                skyDome.material.uniforms.topColor.value.set(CONFIG.skyDome.topColorNight);
+                skyDome.material.uniforms.bottomColor.value.set(CONFIG.skyDome.bottomColorNight);
+            } else if (state.timeOfDay < 0.3 || state.timeOfDay > 0.7) { // Dawn/Dusk
+                skyDome.material.uniforms.topColor.value.copy(skyColor); // Use calculated sky color
+                skyDome.material.uniforms.bottomColor.value.set(0xff9966); // Example dusk bottom
+            } else { // Day
+                skyDome.material.uniforms.topColor.value.set(CONFIG.skyDome.topColorDay);
+                skyDome.material.uniforms.bottomColor.value.set(CONFIG.skyDome.bottomColorDay);
+            }
+        }
+
+        if (waterMesh && waterMesh.material.uniforms) {
+            const isNightTime = state.timeOfDay < 0.3 || state.timeOfDay > 0.8;
+            waterMesh.material.uniforms.color.value.set(isNightTime ? CONFIG.water.colorNight : CONFIG.water.colorDay);
+            waterMesh.material.uniforms.reflectivity.value = isNightTime ? CONFIG.water.reflectivityNight : CONFIG.water.reflectivityDay;
+            waterMesh.material.uniforms.sunDir.value.copy(sunLight.position).normalize();
+            waterMesh.material.uniforms.sunColor.value.copy(sunLight.color);
+        }
+    }
+
+    function updateLayers() {
+        Object.entries(state.activeLayers).forEach(([layer, active]) => {
+            if (active) {
+                showNotification(`${layer.charAt(0).toUpperCase() + layer.slice(1)} layer enabled`, 'info');
+            }
+            // TODO: Implement actual layer visibility logic here (e.g., toggling groups of objects)
+        });
+    }
+
+    function onSceneClick(event) {
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(cityGroup.children, true);
+
+        if (intersects.length > 0) {
+            let clickedLandmarkId = null;
+            for (const intersect of intersects) {
+                let currentObj = intersect.object;
+                while (currentObj) {
+                    if (currentObj.userData && (currentObj.userData.isLandmark || currentObj.userData.landmark)) {
+                        clickedLandmarkId = currentObj.userData.landmarkId || currentObj.userData.landmark;
+                        break;
+                    }
+                    currentObj = currentObj.parent;
+                }
+                if (clickedLandmarkId) break;
+            }
+            if (clickedLandmarkId) showLandmarkInfo(clickedLandmarkId);
+        }
+    }
+
+    function onSceneMouseMove(event) {
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(cityGroup.children, true); // Check landmarkMarkers for efficiency if cityGroup is too large
+
+        landmarkMarkers.forEach(marker => marker.material.color.set(CONFIG.landmarks.markerColor));
+        elements.sceneContainer.style.cursor = 'default';
+
+        if (intersects.length > 0) {
+            let hoveredLandmarkId = null;
+             for (const intersect of intersects) {
+                let currentObj = intersect.object;
+                while (currentObj) {
+                     if (currentObj.userData && (currentObj.userData.isLandmark || currentObj.userData.landmark)) {
+                        hoveredLandmarkId = currentObj.userData.landmarkId || currentObj.userData.landmark;
+                        break;
+                    }
+                    currentObj = currentObj.parent;
+                }
+                if (hoveredLandmarkId) break;
+            }
+
+            if (hoveredLandmarkId) {
+                const marker = landmarkMarkers.find(m => m.userData.landmarkId === hoveredLandmarkId);
+                if (marker) {
+                    marker.material.color.set(CONFIG.landmarks.pulseColor); // Use pulse color for hover
+                    elements.sceneContainer.style.cursor = 'pointer';
+                }
+            }
+        }
+    }
+
+    function showLandmarkInfo(landmarkId) {
+        const landmark = state.landmarks.find(l => l.id === landmarkId);
+        if (!landmark) return;
+
+        elements.locationTitle.textContent = landmark.name;
+        elements.locationDetails.innerHTML = `
+            <img src="${landmark.image}" alt="${landmark.name}" class="location-image">
+            <p class="location-description">${landmark.details}</p>
+        `;
+        elements.infoPanel.classList.add('visible');
+        history.replaceState({}, '', `?view=${state.activeView}&landmark=${landmarkId}`);
+        updateWeatherData(); // Simulated
+    }
+
+    function updateWeatherData() {
+        const weatherStates = [
+            { temperature: '72°F', condition: 'Sunny', icon: '☀️' },
+            { temperature: '68°F', condition: 'Partly Cloudy', icon: '⛅' },
+            { temperature: '75°F', condition: 'Clear', icon: '🌤️' },
+            { temperature: '82°F', condition: 'Hot', icon: '🔥' }
+        ];
+        const randomWeather = weatherStates[Math.floor(Math.random() * weatherStates.length)];
+        elements.weatherWidget.innerHTML = `
+            <span class="weather-icon">${randomWeather.icon}</span>
+            <span class="weather-temp">${randomWeather.temperature}</span>
+            <span class="weather-condition">${randomWeather.condition}</span>
+        `;
+    }
+
+    function shareView() {
+        const url = window.location.href;
+        elements.modalContent.innerHTML = `
+            <p>Share this view with others:</p>
+            <div class="share-url-container">
+                <input type="text" value="${url}" readonly id="share-url" class="share-url-input">
+                <button id="copy-url-button" class="copy-button">Copy</button>
+            </div>
+            <div class="share-buttons">
+                <a href="https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=Check%20out%20this%20view%20of%20Austin%20in%203D!" target="_blank" rel="noopener" class="share-button twitter-share">
+                    Share on Twitter
+                </a>
+                <a href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}" target="_blank" rel="noopener" class="share-button facebook-share">
+                    Share on Facebook
+                </a>
+            </div>
+        `;
+        showModal();
+        const copyButton = document.getElementById('copy-url-button');
+        if (copyButton) {
+            copyButton.addEventListener('click', () => {
+                const shareUrlInput = document.getElementById('share-url');
+                if (shareUrlInput) {
+                    shareUrlInput.select();
+                    navigator.clipboard.writeText(shareUrlInput.value).then(() => {
+                         showNotification('URL copied to clipboard!', 'success');
+                    }).catch(err => {
+                        console.error('Failed to copy URL: ', err);
+                        // Fallback for older browsers if execCommand is preferred (though less secure)
+                        try {
+                            document.execCommand('copy');
+                            showNotification('URL copied to clipboard! (fallback)', 'success');
+                        } catch (e) {
+                            showNotification('Failed to copy URL.', 'error');
+                        }
+                    });
+                }
+            });
+        }
+    }
+
+    function startTour() {
+        const tourStops = [
+            { view: 'downtown', landmark: 'frost', duration: 5000, message: 'Welcome to downtown Austin! Here is the Frost Bank Tower.' },
+            { view: 'capitol', landmark: 'capitol', duration: 5000, message: 'The Texas State Capitol building.' },
+            { view: 'ladybird', landmark: 'congress', duration: 5000, message: 'Lady Bird Lake and the Congress Avenue Bridge.' },
+            { view: 'ut', landmark: null, duration: 5000, message: 'The University of Texas campus.' }
+        ];
+        showNotification('Starting guided tour of Austin...', 'info');
+        let tourIndex = 0;
+
+        function navigateTourStop() {
+            if (tourIndex >= tourStops.length) {
+                showNotification('Tour complete! Explore on your own.', 'success');
+                return;
+            }
+            const stop = tourStops[tourIndex];
+            navigateToView(stop.view);
+            setTimeout(() => {
+                showNotification(stop.message, 'info', stop.duration - 1000);
+                if (stop.landmark) {
+                    setTimeout(() => showLandmarkInfo(stop.landmark), 1000);
+                }
+                setTimeout(() => {
+                    tourIndex++;
+                    navigateTourStop();
+                }, stop.duration);
+            }, CONFIG.animationSpeeds.cameraTransition * 1000); // Wait for camera to move
+        }
+        navigateTourStop();
+    }
+
+    function showModal() {
+        elements.modal.setAttribute('aria-hidden', 'false');
+        elements.modal.querySelector('.modal-container').focus(); // Focus for accessibility
+    }
+
+    function closeModal() {
+        elements.modal.setAttribute('aria-hidden', 'true');
+    }
+
+    function showNotification(message, type = 'info', duration = CONFIG.notifications.defaultDuration) {
+        elements.notificationContent.textContent = message;
+        elements.notification.className = `notification ${type}`;
+        elements.notification.removeAttribute('hidden');
+        if (duration > 0) {
+            setTimeout(() => elements.notification.setAttribute('hidden', 'true'), duration);
+        }
+    }
+
+    function toggleMobileMenu() {
+        const nav = document.querySelector('nav');
+        if (nav) nav.classList.toggle('visible');
+        elements.mobileMenuToggle.classList.toggle('active');
+    }
+
+    function handleKeyboardNavigation(e) {
+        if (e.key === 'ArrowUp' || e.key === '+') zoomIn();
+        else if (e.key === 'ArrowDown' || e.key === '-') zoomOut();
+        else if (e.key === 'r' || e.key === 'R') resetView();
+        else return; // Do not prevent default for other keys
+        e.preventDefault();
+    }
+
+    function updatePostProcessingQuality() {
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const isLowEnd = isMobile && window.devicePixelRatio < 2;
+
+        // Ensure passes are only removed/added if they exist in the composer
+        const hasSSAO = composer.passes.includes(ssaoPass);
+        const hasBloom = composer.passes.includes(bloomPass);
+
+        if (isLowEnd) {
+            if (hasSSAO) composer.removePass(ssaoPass);
+            if (hasBloom) composer.removePass(bloomPass);
+        } else if (isMobile) {
+            if (ssaoPass) ssaoPass.kernelRadius = CONFIG.postProcessing.ssao.mobileKernelRadius;
+            if (bloomPass) bloomPass.strength = CONFIG.postProcessing.bloom.strength * 0.6; // Slightly less bloom
+        } else {
+            // Ensure passes are added back if they were removed and device is not low-end/mobile
+            // This logic needs to be more robust if passes can be dynamically added/removed elsewhere.
+            // For now, assuming they are added in setupPostProcessing initially.
+            if (ssaoPass) ssaoPass.kernelRadius = CONFIG.postProcessing.ssao.kernelRadius;
+            if (bloomPass) bloomPass.strength = CONFIG.postProcessing.bloom.strength;
+        }
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+
+        const currentTime = performance.now() * 0.001; // Time in seconds
+
+        if (!state.isLoading) {
+            // Animate landmark marker pulses
+            landmarkMarkers.forEach(marker => {
+                if (marker.children.length > 0) {
+                    const pulse = marker.children[0];
+                    const pulseData = pulse.userData;
+                    let scale = pulse.scale.x + pulseData.speed * pulseData.direction;
+                    if (scale > pulseData.targetScale) { scale = pulseData.targetScale; pulseData.direction = -1; }
+                    else if (scale < pulseData.initialScale) { scale = pulseData.initialScale; pulseData.direction = 1; }
+                    pulse.scale.set(scale, scale, scale);
+                }
+            });
+
+            if (trafficGroup && state.activeLayers.traffic) { // Only animate if layer is active
+                 trafficGroup.visible = true;
+                trafficGroup.children.forEach(car => {
+                    if (car.userData.movingOnX) {
+                        car.position.x += car.userData.speed;
+                        if (car.position.x > 500) car.position.x = -500;
+                    } else {
+                        car.position.z += car.userData.speed;
+                        if (car.position.z > 500) car.position.z = -500;
+                    }
+                });
+            } else if (trafficGroup) {
+                trafficGroup.visible = false;
+            }
+
+            if (birdsGroup) {
+                birdsGroup.children.forEach(bird => {
+                    bird.position.x += bird.userData.speed;
+                    bird.position.y += Math.sin(currentTime * bird.userData.frequency * 100 + bird.userData.phase) * bird.userData.amplitude * 0.1; // Use currentTime
+                    bird.rotation.z += bird.userData.rotationSpeed;
+                    if (bird.position.x > 500) bird.position.x = -500;
+                });
+            }
+
+            if (waterMesh && waterMesh.material.uniforms) {
+                waterMesh.material.uniforms.time.value = currentTime;
+            }
+        }
+        composer.render();
+    }
+
+    // This function is now mostly for marker visibility based on camera view.
+    // Actual screen position for UI elements would require projecting to 2D.
+    function updateLandmarkMarkersVisibility() {
+        state.landmarks.forEach((landmarkData, index) => {
+            if (index < landmarkMarkers.length) {
+                const marker = landmarkMarkers[index];
+                const position = marker.position.clone();
+                position.project(camera); // projects to Normalized Device Coordinates
+                marker.visible = position.z < 1; // Only show if in front of camera's near plane (simplified check)
+            }
+        });
+    }
+    // Call this in animate loop if needed:
+    // if (!state.isLoading) updateLandmarkMarkersVisibility();
+
+
+    function loadURLParams() {
+        const params = new URLSearchParams(window.location.search);
+        const viewParam = params.get('view');
+        if (viewParam && cameraPositions[viewParam]) {
+            state.activeView = viewParam; // Set default active view from URL
+            state.urlParams.view = viewParam;
+        }
+
+        const landmarkParam = params.get('landmark');
+        if (landmarkParam) {
+            state.urlParams.landmark = landmarkParam;
+            // Landmark info will be shown in loadingManager.onLoad or simulateLoading
+        }
+    }
+    // Note on disposing resources:
+    // When objects (meshes, groups) are removed from the scene, ensure to dispose their geometries and materials
+    // to free up GPU memory, e.g.:
+    // scene.remove(myMesh);
+    // myMesh.geometry.dispose();
+    // myMesh.material.dispose();
+    // If textures are unique to a material, texture.dispose() as well.
+});
