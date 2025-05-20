@@ -1,5 +1,9 @@
 import React from 'react';
 import { Line } from 'react-chartjs-2';
+import { Chart, LineElement, PointElement, LinearScale, Title, CategoryScale, Tooltip, Legend } from 'chart.js';
+
+// Register Chart.js components
+Chart.register(LineElement, PointElement, LinearScale, CategoryScale, Title, Tooltip, Legend);
 
 function LegislationTimeline({ data }) {
   if (!data || data.length === 0) {

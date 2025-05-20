@@ -1,0 +1,32 @@
+/* Add floating animation */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.float-delay-1 {
+  animation-delay: -1.5s;
+}
+
+.float-delay-2 {
+  animation-delay: -3s;
+}
+
+.float-delay-3 {
+  animation-delay: -4.5s;
+}
+
+.float-delay-4 {
+  animation-delay: -6s;
+}

@@ -13,7 +13,10 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Explicitly serve static files from 'public' and 'public/dist'
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/dist', express.static(path.join(__dirname, 'public/dist')));
 
 // Load tariff data from file
 const loadTariffData = () => {

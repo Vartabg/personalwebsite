@@ -24,7 +24,7 @@ function ContactForm() {
   const handleSubmit = (e) => {
     e.preventDefault();
     // In a real app, you would send this data to your server
-    console.log('Form submitted:', formData);
+    // console.log('Form submitted:', formData); // Remove debug log
     
     // Simulate form submission
     setFormStatus({

@@ -28,7 +28,8 @@ function JetsStats() {
         
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching Jets stats:', error);
+        // Remove debug log from error
+        // console.error('Error fetching Jets stats:', error);
         setError('Failed to load Jets statistics. Please try again later.');
         setLoading(false);
       }

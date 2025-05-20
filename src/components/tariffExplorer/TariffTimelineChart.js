@@ -81,23 +81,6 @@ function TariffTimelineChart({ data }) {
           text: 'Tariff Rate (%)'
         }
       }
-    },
-    // Add annotations for significant events
-    annotation: {
-      annotations: sortedData
-        .filter((_, index) => index % Math.ceil(sortedData.length / 5) === 0) // Add annotations for every ~5th data point
-        .map((item, index) => ({
-          type: 'line',
-          scaleID: 'x',
-          value: item.year,
-          borderColor: 'rgba(255, 99, 132, 0.5)',
-          borderWidth: 1,
-          label: {
-            content: item.year.toString(),
-            enabled: true,
-            position: index % 2 === 0 ? 'top' : 'bottom'
-          }
-        }))
     }
   };
 

@@ -51,7 +51,8 @@ function PetFinder() {
       setPets(filteredPets);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching pets:', error);
+      // Remove debug log from error
+      // console.error('Error fetching pets:', error);
       setError('Failed to fetch pets. Please try again later.');
       setLoading(false);
     }

@@ -1,13 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Chart, LineElement, PointElement, BarElement, LinearScale, Title, CategoryScale, Tooltip, Legend } from 'chart.js';
-import { Line, Bar } from 'react-chartjs-2';
 import TariffTimelineChart from './TariffTimelineChart';
 import EconomicImpactChart from './EconomicImpactChart';
 import LegislationTimeline from './LegislationTimeline';
-
-// Register Chart.js components
-Chart.register(LineElement, PointElement, BarElement, LinearScale, CategoryScale, Title, Tooltip, Legend);
 
 function TariffExplorer() {
   const [loading, setLoading] = useState(true);
@@ -24,7 +19,8 @@ function TariffExplorer() {
         setTariffData(response.data);
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching tariff data:', error);
+        // Remove debug log from error
+        // console.error('Error fetching tariff data:', error);
         setError('Failed to load tariff data. Please try again later.');
         setLoading(false);
       }
@@ -61,11 +57,13 @@ function TariffExplorer() {
     return (
       <div className="space-y-8">
         <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-semibold mb-4">{tariffData.overview.title}</h3>
-          <p className="text-gray-700 mb-6">{tariffData.overview.description}</p>
+          <h3 className="text-xl font-semibold mb-4">{tariffData.overview?.title || 'Historical U.S. Tariff Rates'}</h3>
+          <p className="text-gray-700 mb-6">{tariffData.overview?.description || 'Historical tariff rates in the United States.'}</p>
           
           {/* Main timeline chart */}
-          <div className="h-96 mb-8">
+          <div className="h-96 mb-8" style={{ maxHeight: "400px" }}>
+            {/* TEMP DEBUG: Show filteredRates length and sample */}
+            <div className="text-xs text-gray-500 mb-2">Data points: {filteredRates.length} | Sample: {filteredRates[0] ? JSON.stringify(filteredRates[0]) : 'N/A'}</div>
             <TariffTimelineChart data={filteredRates} />
           </div>
           
@@ -166,7 +164,7 @@ function TariffExplorer() {
           Below are key periods in U.S. tariff history and their economic impacts.
         </p>
         
-        <div className="h-96 mb-8">
+        <div style={{ height: "400px", marginBottom: "2rem" }}>
           <EconomicImpactChart data={tariffData.economicImpacts} />
         </div>
         
@@ -175,17 +173,25 @@ function TariffExplorer() {
           <div className="space-y-6">
             {tariffData.economicImpacts.map((period, index) => (
               <div key={index} className="border-l-4 border-blue-500 pl-4 py-3 bg-blue-50">
-                <h5 className="font-semibold text-blue-900">{period.period}: {period.tariffTrend.charAt(0).toUpperCase() + period.tariffTrend.slice(1)} Tariffs</h5>
+                <h5 className="font-semibold text-blue-900">
+                  {period.period}: {period.tariffTrend ? (period.tariffTrend.charAt(0).toUpperCase() + period.tariffTrend.slice(1)) : ''} Tariffs
+                </h5>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-                  <div>
-                    <span className="font-medium text-gray-700">GDP Growth:</span> {period.gdpEffect}
-                  </div>
-                  <div className="md:col-span-2">
-                    <span className="font-medium text-gray-700">Employment:</span> {period.employmentEffect}
-                  </div>
-                  <div className="md:col-span-3">
-                    <span className="font-medium text-gray-700">Prices:</span> {period.priceEffect}
-                  </div>
+                  {period.gdpEffect && (
+                    <div>
+                      <span className="font-medium text-gray-700">GDP Growth:</span> {period.gdpEffect}
+                    </div>
+                  )}
+                  {period.employmentEffect && (
+                    <div className="md:col-span-2">
+                      <span className="font-medium text-gray-700">Employment:</span> {period.employmentEffect}
+                    </div>
+                  )}
+                  {period.priceEffect && (
+                    <div className="md:col-span-3">
+                      <span className="font-medium text-gray-700">Prices:</span> {period.priceEffect}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -208,7 +214,7 @@ function TariffExplorer() {
           influencing trade relations, economic development, and government revenue.
         </p>
         
-        <div className="h-96 mb-8">
+        <div style={{ height: "400px", marginBottom: "2rem" }}>
           <LegislationTimeline data={filteredLegislation} />
         </div>
         

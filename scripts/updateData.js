@@ -17,7 +17,7 @@ const JETS_DATA_PATH = path.join(__dirname, '../src/data/jetsData.json');
 // Function to update tariff data
 async function updateTariffData() {
   try {
-    console.log('Updating tariff data...');
+    // console.log('Updating tariff data...');
     
     // In a real application, you would fetch from an external API
     // For now, we'll just read and write the existing data to verify the script works
@@ -43,7 +43,7 @@ async function updateTariffData() {
 // Function to update pet finder data
 async function updatePetData() {
   try {
-    console.log('Updating pet finder data...');
+    // console.log('Updating pet finder data...');
     
     // This is where you would implement code to fetch and update pet data
     console.log('Pet data update not implemented yet.');
@@ -58,7 +58,7 @@ async function updatePetData() {
 // Function to update Jets stats data
 async function updateJetsData() {
   try {
-    console.log('Updating Jets stats data...');
+    // console.log('Updating Jets stats data...');
     
     // This is where you would implement code to fetch and update Jets stats
     console.log('Jets data update not implemented yet.');
@@ -76,7 +76,7 @@ async function main() {
   const args = process.argv.slice(2);
   const dataTypes = args.length > 0 ? args : ['tariff', 'pets', 'jets'];
   
-  console.log('Starting data update...');
+  // console.log('Starting data update...');
   
   // Update specified data types
   const results = [];

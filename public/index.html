@@ -5,11 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Garo's Multi-App Platform</title>
     <meta name="description" content="Explore tariff data, find pets, and check Jets sports statistics">
-    <link rel="stylesheet" href="styles.css">
-    <!-- Add Tailwind CDN for now, will use built version later -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Remove Tailwind CDN for production -->
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+    <!-- Use built CSS instead -->
+    <link rel="stylesheet" href="/styles.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        /* Floating animation for cards */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .float-delay-1 { animation-delay: -1.5s; }
+        .float-delay-2 { animation-delay: -3s; }
+        .float-delay-3 { animation-delay: -4.5s; }
+        .float-delay-4 { animation-delay: -6s; }
+        
+        /* Jets green color */
+        .bg-jets-green {
+            background-color: #125740;
+        }
+        
+        /* Custom styles for the app's full-height behavior */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        
+        #app {
+            min-height: calc(100vh - 65px - 340px); /* Viewport height minus header and footer */
+        }
+        
+        /* Transition effect */
+        .fade-in {
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
 </head>
 <body class="bg-gray-50">
     <header class="bg-blue-600 text-white shadow-md">
@@ -17,10 +62,10 @@
             <nav class="flex justify-between items-center">
                 <div class="text-2xl font-bold">Garo's Platform</div>
                 <div class="hidden md:flex space-x-6">
-                    <a href="#tariff" class="hover:text-blue-200 transition">Tariff Explorer</a>
-                    <a href="#pets" class="hover:text-blue-200 transition">Pet Finder</a>
-                    <a href="#jets" class="hover:text-blue-200 transition">Jets Stats</a>
-                    <a href="#contact" class="hover:text-blue-200 transition">Contact</a>
+                    <a href="#tariff" class="hover:text-blue-200 transition section-link">Tariff Explorer</a>
+                    <a href="#pets" class="hover:text-blue-200 transition section-link">Pet Finder</a>
+                    <a href="#jets" class="hover:text-blue-200 transition section-link">Jets Stats</a>
+                    <a href="#contact" class="hover:text-blue-200 transition section-link">Contact</a>
                 </div>
                 <button class="md:hidden" id="mobile-menu-button">
                     <i class="fas fa-bars text-xl"></i>
@@ -28,18 +73,98 @@
             </nav>
             <!-- Mobile Menu -->
             <div class="hidden md:hidden mt-4 pb-4" id="mobile-menu">
-                <a href="#tariff" class="block py-2 hover:text-blue-200 transition">Tariff Explorer</a>
-                <a href="#pets" class="block py-2 hover:text-blue-200 transition">Pet Finder</a>
-                <a href="#jets" class="block py-2 hover:text-blue-200 transition">Jets Stats</a>
-                <a href="#contact" class="block py-2 hover:text-blue-200 transition">Contact</a>
+                <a href="#tariff" class="block py-2 hover:text-blue-200 transition section-link">Tariff Explorer</a>
+                <a href="#pets" class="block py-2 hover:text-blue-200 transition section-link">Pet Finder</a>
+                <a href="#jets" class="block py-2 hover:text-blue-200 transition section-link">Jets Stats</a>
+                <a href="#contact" class="block py-2 hover:text-blue-200 transition section-link">Contact</a>
             </div>
         </div>
     </header>
 
-    <main>
-        <!-- App container - React will mount here -->
-        <div id="app" class="container mx-auto px-4 py-8"></div>
-    </main>
+    <!-- Home Hero Section (Before React loads) -->
+    <div id="home-hero" class="bg-gradient-to-b from-blue-100 to-white py-16">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-4xl font-bold text-blue-600 mb-6">Garo's Interactive Platform</h1>
+            <p class="text-xl text-gray-700 mb-12 max-w-2xl mx-auto">
+                Explore these interactive tools and visualizations with this modern floating interface
+            </p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-12">
+                <!-- Tariff Explorer Card -->
+                <div class="bg-blue-500 text-white rounded-xl shadow-xl p-6 transform hover:scale-105 transition-all duration-300 floating float-delay-1">
+                    <div class="flex flex-col items-center">
+                        <div class="bg-white/20 w-20 h-20 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-chart-line text-3xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-2">Tariff Explorer</h3>
+                        <p class="opacity-90 text-center">
+                            Visualize historical U.S. tariff data with interactive charts and analysis
+                        </p>
+                        <a href="#tariff" class="mt-4 px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-100 transition section-link">
+                            Explore Data
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Pet Finder Card -->
+                <div class="bg-green-500 text-white rounded-xl shadow-xl p-6 transform hover:scale-105 transition-all duration-300 floating float-delay-2">
+                    <div class="flex flex-col items-center">
+                        <div class="bg-white/20 w-20 h-20 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-paw text-3xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-2">Pet Finder</h3>
+                        <p class="opacity-90 text-center">
+                            Find adoptable cats in your area with a simple ZIP code search
+                        </p>
+                        <a href="#pets" class="mt-4 px-4 py-2 bg-white text-green-600 rounded-lg hover:bg-green-100 transition section-link">
+                            Find Cats
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Jets Stats Card -->
+                <div class="bg-jets-green text-white rounded-xl shadow-xl p-6 transform hover:scale-105 transition-all duration-300 floating float-delay-3">
+                    <div class="flex flex-col items-center">
+                        <div class="bg-white/20 w-20 h-20 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-football-ball text-3xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-2">Jets Stats</h3>
+                        <p class="opacity-90 text-center">
+                            Explore NY Jets historical statistics with interactive visualizations
+                        </p>
+                        <a href="#jets" class="mt-4 px-4 py-2 bg-white text-jets-green rounded-lg hover:bg-green-100 transition section-link">
+                            View Stats
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Contact Card -->
+                <div class="bg-purple-500 text-white rounded-xl shadow-xl p-6 transform hover:scale-105 transition-all duration-300 floating float-delay-4">
+                    <div class="flex flex-col items-center">
+                        <div class="bg-white/20 w-20 h-20 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-envelope text-3xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-2">Contact Me</h3>
+                        <p class="opacity-90 text-center">
+                            Get in touch for questions, collaborations, or opportunities
+                        </p>
+                        <a href="#contact" class="mt-4 px-4 py-2 bg-white text-purple-600 rounded-lg hover:bg-purple-100 transition section-link">
+                            Reach Out
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-8">
+                <button id="start-app-btn" class="px-8 py-4 bg-blue-600 text-white rounded-full text-lg font-bold shadow-lg hover:bg-blue-700 hover:shadow-xl transform hover:-translate-y-1 transition-all">
+                    Launch Application
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- App container - React will mount here -->
+    <div id="app" class="container mx-auto px-4 py-8" style="display: none;"></div>
 
     <footer class="bg-gray-800 text-white mt-12">
         <div class="container mx-auto px-4 py-8">
@@ -51,9 +176,9 @@
                 <div>
                     <h3 class="text-xl font-semibold mb-4">Quick Links</h3>
                     <ul class="space-y-2">
-                        <li><a href="#tariff" class="hover:text-blue-300 transition">Tariff Explorer</a></li>
-                        <li><a href="#pets" class="hover:text-blue-300 transition">Pet Finder</a></li>
-                        <li><a href="#jets" class="hover:text-blue-300 transition">Jets Stats</a></li>
+                        <li><a href="#tariff" class="hover:text-blue-300 transition section-link">Tariff Explorer</a></li>
+                        <li><a href="#pets" class="hover:text-blue-300 transition section-link">Pet Finder</a></li>
+                        <li><a href="#jets" class="hover:text-blue-300 transition section-link">Jets Stats</a></li>
                     </ul>
                 </div>
                 <div>
@@ -66,16 +191,47 @@
                 </div>
             </div>
             <div class="mt-8 pt-6 border-t border-gray-700 text-center">
-                <p>&copy; 2023 Garo's Platform. All rights reserved.</p>
+                <p>&copy; 2025 Garo's Platform. All rights reserved.</p>
             </div>
         </div>
     </footer>
 
-    <script src="bundle.js"></script>
+    <script src="/dist/bundle.js"></script>
+    <script src="/bundle.js"></script>
     <script>
         // Simple mobile menu toggle
         document.getElementById('mobile-menu-button').addEventListener('click', function() {
             document.getElementById('mobile-menu').classList.toggle('hidden');
+        });
+        
+        // Switch from landing page to React app
+        document.getElementById('start-app-btn').addEventListener('click', function() {
+            showApp();
+        });
+        
+        // Handle section links
+        const sectionLinks = document.querySelectorAll('.section-link');
+        sectionLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                // Don't prevent default so the hash changes
+                showApp();
+            });
+        });
+        
+        // Function to show the app and hide the landing page
+        function showApp() {
+            document.getElementById('home-hero').style.display = 'none';
+            const appContainer = document.getElementById('app');
+            appContainer.style.display = 'block';
+            appContainer.classList.add('fade-in');
+        }
+        
+        // Check if we should show the app immediately (based on hash)
+        window.addEventListener('DOMContentLoaded', function() {
+            const hash = window.location.hash;
+            if (hash && (hash === '#tariff' || hash === '#pets' || hash === '#jets' || hash === '#contact')) {
+                showApp();
+            }
         });
     </script>
 </body>

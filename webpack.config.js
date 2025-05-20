@@ -1,10 +1,11 @@
 const path = require('path');
 
 module.exports = {
-  entry: './src/js/index.js',
+  entry: './src/js/index.js',  // Updated entry point
   output: {
-    path: path.resolve(__dirname, 'public'),
+    path: path.resolve(__dirname, 'public/dist'),
     filename: 'bundle.js',
+    publicPath: '/dist/'
   },
   module: {
     rules: [
@@ -22,13 +23,19 @@ module.exports = {
         test: /\.css$/,
         use: [
           'style-loader',
+          'css-loader',
           {
-            loader: 'css-loader',
+            loader: 'postcss-loader',
             options: {
-              importLoaders: 1,
+              postcssOptions: {
+                plugins: [
+                  'postcss-import',
+                  'tailwindcss',
+                  'autoprefixer'
+                ]
+              }
             }
-          },
-          'postcss-loader'
+          }
         ]
       }
     ]
@@ -36,14 +43,6 @@ module.exports = {
   resolve: {
     extensions: ['.js', '.jsx']
   },
-  devServer: {
-    static: {
-      directory: path.join(__dirname, 'public'),
-    },
-    port: 3000,
-    hot: true,
-    proxy: {
-      '/api': 'http://localhost:3000'
-    }
-  }
+  devtool: 'source-map',
+  mode: 'development'
 };
