@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Application Structure Plan: The SPA implements the structure proposed in the "Landing Page Development Plan" report. It includes:
+        1. Hero Section: Introduces the concept of the showcase.
+        2. Featured Projects: Dynamically showcases key development concepts from the report as "projects" (e.g., Motion UI, Accessible Modals). Each project can be explored via a modal.
+        3. Trends & Technologies: Presents summaries of trends discussed in the report, with one interactive chart example.
+        4. About Section: Briefly outlines the mission derived from the report.
+        5. Call to Action/Submit: A "Submit Project" feature opening a modal with a form.
+        Navigation is fixed at the top, allowing smooth scrolling to sections. Modals are reused for project details and submissions.
+        This structure was chosen to directly reflect the report's blueprint, making the SPA an interactive demonstration of the plan itself, enhancing usability and understanding of the report's content.
+    -->
+    <!-- Visualization & Content Choices:
+        - Hero: Text, CTA. Goal: Inform, Engage. Method: HTML/Tailwind. Interaction: Button click. Justification: Clear entry point.
+        - Featured Projects: Cards with title, description, tags. Goal: Showcase, Detail. Method: HTML/Tailwind grid, JS for modal. Interaction: Click card to open modal with more details. Justification: Interactive exploration of report concepts.
+        - Project Detail Modal: Dynamic content. Goal: Inform. Method: JS populating modal. Interaction: View details. Justification: Deep dive into specific "project" concepts.
+        - Trends & Technologies: Text summaries, Chart.js bar chart. Goal: Educate, Visualize. Method: HTML/Tailwind, Chart.js. Interaction: View chart. Justification: Present trend information and a sample data visualization as per report.
+        - About Section: Text. Goal: Inform. Method: HTML/Tailwind. Justification: Provide context.
+        - Submit Modal: Form. Goal: Engage. Method: HTML/Tailwind form in modal. Interaction: Open modal, view form. Justification: Demonstrate a submission mechanism as per report.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
+    -->
+    <title>Interactive Showcase: Landing Page Development Plan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f5f5f0; /* Warm Beige */
+            color: #334155; /* Slate Gray */
+        }
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: #14b8a6; /* Muted Teal */
+            color: white;
+            padding: 8px;
+            z-index: 100;
+            transition: top 0.3s;
+        }
+        .skip-link:focus {
+            top: 0;
+        }
+        .section-container {
+            padding-top: 4rem;
+            padding-bottom: 4rem;
+        }
+        .nav-link {
+            @apply px-3 py-2 text-slate-700 hover:text-teal-600 transition-colors duration-300;
+        }
+        .nav-link.active {
+            @apply text-teal-600 font-semibold border-b-2 border-teal-600;
+        }
+        .project-card {
+            @apply bg-white rounded-xl shadow-lg overflow-hidden transform hover:scale-105 transition-transform duration-300 cursor-pointer;
+        }
+        .modal-button-primary {
+            @apply bg-teal-600 hover:bg-teal-700 text-white;
+        }
+        .modal-button-secondary {
+            @apply bg-slate-200 hover:bg-slate-300 text-slate-700;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .floating-shape {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.1;
+            background-color: #14b8a6; /* Muted Teal */
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <div id="loading-screen" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center transition-opacity duration-500 ease-out">
+        <div class="text-center">
+            <svg class="mx-auto h-12 w-12 text-teal-600 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <h1 class="text-2xl font-semibold text-slate-700 mt-4">Digital Vanguard</h1>
+            <p class="text-slate-500">Curating Web Excellence...</p>
+        </div>
+    </div>
+
+    <header id="app-header" class="bg-white/80 backdrop-blur-md shadow-sm fixed top-0 left-0 right-0 z-40">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <a href="#home" class="text-2xl font-bold text-teal-600">DigitalVanguard</a>
+                </div>
+                <nav class="hidden md:flex space-x-1" id="desktop-nav">
+                    <a href="#home" class="nav-link active">Home</a>
+                    <a href="#projects" class="nav-link">Projects</a>
+                    <a href="#trends" class="nav-link">Trends</a>
+                    <a href="#about" class="nav-link">About</a>
+                    <a href="#submit" class="nav-link">Submit</a>
+                </nav>
+                <div class="md:hidden">
+                    <button id="mobile-menu-toggle" aria-label="Open main menu" aria-expanded="false" class="text-slate-500 hover:text-teal-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="mobile-menu" class="hidden md:hidden bg-white shadow-lg">
+            <a href="#home" class="block nav-link px-4 py-3 border-b">Home</a>
+            <a href="#projects" class="block nav-link px-4 py-3 border-b">Projects</a>
+            <a href="#trends" class="block nav-link px-4 py-3 border-b">Trends</a>
+            <a href="#about" class="block nav-link px-4 py-3 border-b">About</a>
+            <a href="#submit" class="block nav-link px-4 py-3">Submit</a>
+        </div>
+    </header>
+
+    <main id="main-content">
+        <section id="home" class="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-stone-200 overflow-hidden section-container">
+            <div id="hero-floating-shapes-container" class="absolute inset-0"></div>
+            <div class="relative z-10 text-center px-4">
+                <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold text-slate-800 mb-6 leading-tight">
+                    Web Innovation <span class="text-teal-600">Unleashed</span>
+                </h1>
+                <p class="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto mb-10">
+                    This interactive application demonstrates the "Landing Page Development Plan" by showcasing its core concepts. Explore how to build a platform for the latest and greatest in web projects.
+                </p>
+                <a href="#projects" class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-8 rounded-lg text-lg transition-transform transform hover:scale-105 shadow-md hover:shadow-lg">
+                    Explore Concepts
+                </a>
+            </div>
+        </section>
+
+        <section id="projects" class="section-container bg-slate-50">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="text-3xl font-bold text-center text-slate-800 mb-4">Featured Concepts from the Plan</h2>
+                <p class="text-center text-slate-600 mb-12 max-w-xl mx-auto">The following "projects" are interactive demonstrations of key ideas presented in the development plan. Click on a card to learn more about how each concept contributes to a modern, engaging web showcase.</p>
+                <div id="projects-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                </div>
+            </div>
+        </section>
+
+        <section id="trends" class="section-container bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="text-3xl font-bold text-center text-slate-800 mb-4">Trends & Technologies Spotlight</h2>
+                 <p class="text-center text-slate-600 mb-12 max-w-xl mx-auto">This section highlights key web design and development trends discussed in the plan, illustrating how they shape innovative digital experiences. The goal is to provide context and educational value.</p>
+                <div class="grid md:grid-cols-2 gap-8 items-start">
+                    <div id="trends-articles" class="space-y-6">
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-slate-700 mb-4 text-center md:text-left">Illustrative Chart: AI Impact</h3>
+                        <p class="text-slate-600 mb-4 text-center md:text-left">This sample chart (using Chart.js) visualizes hypothetical data related to AI's impact on UX, a trend discussed in the development plan.</p>
+                        <div class="chart-container bg-slate-50 p-4 rounded-lg shadow">
+                            <canvas id="trends-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="about" class="section-container bg-slate-50">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-3xl font-bold text-slate-800 mb-4">About This Showcase</h2>
+                <p class="text-lg text-slate-600 max-w-2xl mx-auto">
+                    This interactive application serves as a dynamic interpretation of the "Landing Page Development Plan." Its mission is to demonstrate how the principles and structures outlined in the plan can be realized to create a compelling showcase for digital innovation. It aims to be an exemplar of modern web design and UX, reflecting the quality it advocates for.
+                </p>
+            </div>
+        </section>
+
+        <section id="submit" class="section-container bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-3xl font-bold text-slate-800 mb-4">Contribute to Innovation</h2>
+                <p class="text-lg text-slate-600 max-w-xl mx-auto mb-8">
+                    Inspired by the plan? The original report envisions a platform where creators can submit their groundbreaking projects. Click below to see a conceptual submission form.
+                </p>
+                <button id="open-submission-modal-button" class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-8 rounded-lg text-lg transition-transform transform hover:scale-105 shadow-md hover:shadow-lg">
+                    Submit Your Project (Concept)
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-slate-800 text-slate-300 py-12">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p>&copy; <span id="current-year"></span> Digital Vanguard Showcase. An interactive interpretation of the Development Plan.</p>
+            <p class="text-sm mt-2">Designed to demonstrate modern web practices.</p>
+        </div>
+    </footer>
+
+    <div id="modal" class="fixed inset-0 bg-slate-900 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="modal-title-heading">
+        <div class="modal-container bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div class="modal-header flex justify-between items-center p-4 sm:p-6 border-b border-slate-200">
+                <h2 id="modal-title-heading" class="modal-title text-xl font-semibold text-slate-800">Modal Title</h2>
+                <button class="modal-close text-slate-400 hover:text-slate-600" aria-label="Close modal" data-close-modal>
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="modal-content p-4 sm:p-6" id="modal-content-area">
+            </div>
+            <div class="modal-footer flex justify-end p-4 sm:p-6 bg-slate-50 border-t border-slate-200 rounded-b-lg space-x-3">
+                <button class="modal-button-secondary py-2 px-4 rounded-md font-medium" data-close-modal>Close</button>
+                <button class="modal-button-primary py-2 px-4 rounded-md font-medium hidden" id="modal-primary-action">Primary Action</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="notification" class="fixed bottom-5 right-5 bg-slate-800 text-white py-3 px-5 rounded-lg shadow-md hidden z-[60]" role="alert" aria-live="assertive">
+        <div class="notification-content">Notification message</div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Configuration & Data ---
+            const projectsData = [
+                {
+                    id: 'motion-ui',
+                    title: 'Motion UI Enhancement',
+                    icon: '✨',
+                    description: 'Implementing subtle page transitions and interactive effects using GSAP to create a dynamic user experience, as outlined in Section 5.A of the Development Plan. This enhances engagement and provides visual feedback.',
+                    details: '<p>Motion UI involves using animation to guide users, provide feedback, and add a layer of polish. Key aspects include:</p><ul class="list-disc list-inside mt-2 text-slate-600"><li>Page transitions</li><li>Scroll-triggered animations</li><li>Interactive hover effects on elements like cards</li><li>Loading animations</li></ul><p class="mt-2">The Development Plan suggests using GSAP for its performance and versatility in creating these effects.</p>',
+                    tags: ['GSAP', 'Animation', 'UX', 'Interactivity']
+                },
+                {
+                    id: 'accessible-modal',
+                    title: 'Accessible Modal Component',
+                    icon: '♿',
+                    description: 'Adapting and enhancing the modal component with full ARIA compliance for project details and submissions (Sections 2.B, 5.B of the Plan). Ensures usability for all.',
+                    details: '<p>An accessible modal must manage focus, announce itself to screen readers, and be keyboard navigable. Key ARIA attributes include:</p><ul class="list-disc list-inside mt-2 text-slate-600"><li><code>role="dialog"</code></li><li><code>aria-modal="true"</code></li><li><code>aria-labelledby</code> (pointing to the modal title)</li><li><code>aria-describedby</code> (optional, for additional context)</li></ul><p class="mt-2">The modal in this SPA is designed based on these principles, adapted from the <code>index.html.original</code> structure.</p>',
+                    tags: ['Accessibility', 'ARIA', 'JavaScript', 'UI Component']
+                },
+                {
+                    id: 'scrollytelling',
+                    title: 'Scrollytelling Narrative Flow',
+                    icon: '📜',
+                    description: 'Designing the page to unfold a story as the user scrolls, connecting content sections thematically (Section 5.A of the Plan). Transforms passive scrolling into active discovery.',
+                    details: '<p>Scrollytelling uses the scroll action to reveal content sequentially, creating a narrative. Techniques include:</p><ul class="list-disc list-inside mt-2 text-slate-600"><li>Animating elements into view on scroll</li><li>Parallax effects for depth</li><li>Thematic transitions between sections</li><li>Visual cues that guide the user down the page</li></ul><p class="mt-2">This SPA attempts a light version by structuring content logically and using smooth scroll navigation.</p>',
+                    tags: ['UX Design', 'Storytelling', 'Animation', 'Content Strategy']
+                },
+                {
+                    id: 'responsive-design',
+                    title: 'Mobile-First Responsive Design',
+                    icon: '📱',
+                    description: 'Prioritizing mobile screen design and progressively enhancing for larger screens, ensuring a seamless experience across all devices (Section 6.A of the Plan).',
+                    details: '<p>Mobile-first design is crucial for modern web development. This involves:</p><ul class="list-disc list-inside mt-2 text-slate-600"><li>Designing for the smallest viewport first.</li><li>Using flexible grids and images.</li><li>Employing media queries to adapt layouts.</li><li>Ensuring touch targets are adequately sized.</li></ul><p class="mt-2">This SPA uses Tailwind CSS, which is inherently mobile-first, to achieve responsiveness.</p>',
+                    tags: ['Responsive Design', 'Mobile-First', 'Tailwind CSS', 'CSS']
+                }
+            ];
+
+            const trendsArticlesData = [
+                {
+                    title: 'The Rise of AI in UX (Plan Section 5.B)',
+                    summary: 'Exploring how AI can personalize user experiences, from content suggestions to accessibility enhancements. The Development Plan highlights AI for creating more relevant and engaging interactions, while also cautioning for ethical considerations and user privacy.'
+                },
+                {
+                    title: 'Ethical Design & User Privacy (Plan Section 5.B)',
+                    summary: 'Discussing the importance of transparency, consent, and user control in modern web applications. The Plan emphasizes building trust by being clear about data usage and avoiding deceptive patterns.'
+                },
+                {
+                    title: 'Advanced Accessibility (WCAG 2.2) (Plan Sections 5.B, 6.B)',
+                    summary: 'Highlighting the non-negotiable aspects of building for everyone, including keyboard navigation, screen reader support, and sufficient contrast ratios. The Plan advocates for integrating accessibility throughout the development lifecycle.'
+                }
+            ];
+
+            // --- UI Elements ---
+            const loadingScreen = document.getElementById('loading-screen');
+            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const projectsGrid = document.getElementById('projects-grid');
+            const trendsArticlesContainer = document.getElementById('trends-articles');
+            const modal = document.getElementById('modal');
+            const modalTitle = document.getElementById('modal-title-heading');
+            const modalContentArea = document.getElementById('modal-content-area');
+            const modalPrimaryAction = document.getElementById('modal-primary-action');
+            const openSubmissionModalButton = document.getElementById('open-submission-modal-button');
+            const notificationElement = document.getElementById('notification');
+            const notificationContent = notificationElement.querySelector('.notification-content');
+            const navLinks = document.querySelectorAll('.nav-link');
+            const desktopNavLinks = document.querySelectorAll('#desktop-nav .nav-link');
+            const mobileNavLinks = document.querySelectorAll('#mobile-menu .nav-link');
+            const heroFloatingShapesContainer = document.getElementById('hero-floating-shapes-container');
+
+
+            // --- Functions ---
+            function showLoadingScreen() {
+                if (loadingScreen) loadingScreen.classList.remove('hidden');
+            }
+
+            function hideLoadingScreen() {
+                if (loadingScreen) {
+                    loadingScreen.classList.add('opacity-0');
+                    setTimeout(() => {
+                        loadingScreen.classList.add('hidden');
+                    }, 500);
+                }
+            }
+            
+            window.addEventListener('load', () => {
+                hideLoadingScreen();
+            });
+
+            function toggleMobileMenu() {
+                const isExpanded = mobileMenuToggle.getAttribute('aria-expanded') === 'true';
+                mobileMenuToggle.setAttribute('aria-expanded', !isExpanded);
+                mobileMenu.classList.toggle('hidden');
+                // Optional: Change burger icon to X
+                if (!isExpanded) {
+                    mobileMenuToggle.innerHTML = `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>`;
+                } else {
+                    mobileMenuToggle.innerHTML = `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" /></svg>`;
+                }
+            }
+
+            function populateProjects() {
+                if (!projectsGrid) return;
+                projectsData.forEach(project => {
+                    const card = document.createElement('div');
+                    card.className = 'project-card flex flex-col';
+                    card.innerHTML = `
+                        <div class="p-6 flex-grow">
+                            <div class="text-4xl mb-4 text-center">${project.icon}</div>
+                            <h3 class="text-xl font-semibold text-slate-800 mb-2 text-center">${project.title}</h3>
+                            <p class="text-slate-600 text-sm mb-4 text-center">${project.description}</p>
+                        </div>
+                        <div class="p-6 bg-slate-50 border-t border-slate-200">
+                             <div class="flex flex-wrap gap-2 mb-4 justify-center">
+                                ${project.tags.map(tag => `<span class="bg-teal-100 text-teal-700 px-2 py-1 rounded-full text-xs font-medium">${tag}</span>`).join('')}
+                            </div>
+                            <button data-project-id="${project.id}" class="w-full learn-more-button bg-teal-500 hover:bg-teal-600 text-white font-medium py-2 px-4 rounded-md transition-colors duration-300">Learn More</button>
+                        </div>
+                    `;
+                    projectsGrid.appendChild(card);
+                });
+            }
+            
+            function populateTrendsArticles() {
+                if (!trendsArticlesContainer) return;
+                trendsArticlesData.forEach(article => {
+                    const articleDiv = document.createElement('div');
+                    articleDiv.className = 'bg-slate-50 p-6 rounded-lg shadow';
+                    articleDiv.innerHTML = `
+                        <h4 class="text-lg font-semibold text-slate-700 mb-2">${article.title}</h4>
+                        <p class="text-slate-600 text-sm">${article.summary}</p>
+                    `;
+                    trendsArticlesContainer.appendChild(articleDiv);
+                });
+            }
+
+            function openModal(title, content, primaryActionText = null, primaryActionCallback = null) {
+                modalTitle.textContent = title;
+                if (typeof content === 'string') {
+                    modalContentArea.innerHTML = content;
+                } else {
+                    modalContentArea.innerHTML = ''; // Clear previous content
+                    modalContentArea.appendChild(content);
+                }
+
+                if (primaryActionText && primaryActionCallback) {
+                    modalPrimaryAction.textContent = primaryActionText;
+                    modalPrimaryAction.classList.remove('hidden');
+                    modalPrimaryAction.onclick = primaryActionCallback;
+                } else {
+                    modalPrimaryAction.classList.add('hidden');
+                    modalPrimaryAction.onclick = null;
+                }
+                modal.classList.remove('hidden');
+                modal.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden'; // Prevent background scroll
+            }
+
+            function closeModal() {
+                modal.classList.add('hidden');
+                modal.setAttribute('aria-hidden', 'true');
+                document.body.style.overflow = ''; // Restore background scroll
+            }
+            
+            function showNotification(message, duration = 3000) {
+                notificationContent.textContent = message;
+                notificationElement.classList.remove('hidden');
+                notificationElement.classList.add('opacity-100');
+                setTimeout(() => {
+                    notificationElement.classList.add('hidden');
+                    notificationElement.classList.remove('opacity-100');
+                }, duration);
+            }
+
+            function handleProjectLearnMore(event) {
+                if (event.target.classList.contains('learn-more-button')) {
+                    const projectId = event.target.dataset.projectId;
+                    const project = projectsData.find(p => p.id === projectId);
+                    if (project) {
+                        openModal(project.title, project.details);
+                    }
+                }
+            }
+
+            function createSubmissionForm() {
+                const form = document.createElement('form');
+                form.id = 'submission-form';
+                form.className = 'space-y-4';
+                form.innerHTML = `
+                    <div>
+                        <label for="projectName" class="block text-sm font-medium text-slate-700">Project Name</label>
+                        <input type="text" id="projectName" name="projectName" required class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="projectUrl" class="block text-sm font-medium text-slate-700">Project URL</label>
+                        <input type="url" id="projectUrl" name="projectUrl" required class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="projectDescription" class="block text-sm font-medium text-slate-700">Brief Description</label>
+                        <textarea id="projectDescription" name="projectDescription" rows="3" required class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm"></textarea>
+                    </div>
+                    <div>
+                        <label for="contactEmail" class="block text-sm font-medium text-slate-700">Your Email (Optional)</label>
+                        <input type="email" id="contactEmail" name="contactEmail" class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm">
+                    </div>
+                `;
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    showNotification('Conceptual submission received! (No actual data sent)');
+                    closeModal();
+                    form.reset();
+                });
+                return form;
+            }
+            
+            const submissionForm = createSubmissionForm(); // Create it once
+
+            function openSubmissionModal() {
+                openModal(
+                    'Submit Your Project (Concept)', 
+                    submissionForm,
+                    'Submit Concept', 
+                    () => {
+                        // Trigger form submission programmatically
+                        const submitEvent = new Event('submit', { cancelable: true, bubbles: true });
+                        if (submissionForm.dispatchEvent(submitEvent)) {
+                             // If not prevented by form validation
+                            showNotification('Conceptual submission received! (No actual data sent)');
+                            closeModal();
+                            submissionForm.reset();
+                        }
+                    }
+                );
+            }
+
+            function renderTrendsChart() {
+                const ctx = document.getElementById('trends-chart')?.getContext('2d');
+                if (!ctx) return;
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Engagement', 'Conversion', 'Accessibility'],
+                        datasets: [{
+                            label: 'Hypothetical Impact of AI on UX Metrics (%)',
+                            data: [30, 15, 20],
+                            backgroundColor: [
+                                'rgba(20, 184, 166, 0.6)', // teal-500
+                                'rgba(13, 148, 136, 0.6)', // teal-600
+                                'rgba(15, 118, 110, 0.6)'  // teal-700
+                            ],
+                            borderColor: [
+                                'rgb(20, 184, 166)',
+                                'rgb(13, 148, 136)',
+                                'rgb(15, 118, 110)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                suggestedMax: 40,
+                                grid: { color: 'rgba(100, 116, 139, 0.1)'} // slate-500 with opacity
+                            },
+                            x: {
+                                grid: { display: false }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false // Hiding legend as per original request for simplicity
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${context.raw}%`;
+                                    }
+                                }
+                            }
+                        },
+                        // Ensure labels don't get cut off (basic wrapping logic)
+                        // Chart.js v3+ handles this better, but for complex cases, custom plugins might be needed.
+                        // For this example, short labels are used.
+                    }
+                });
+            }
+
+            function updateActiveNavLink() {
+                let currentSectionId = 'home';
+                const sections = document.querySelectorAll('main section');
+                const headerHeight = document.getElementById('app-header')?.offsetHeight || 0;
+
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop - headerHeight - 50; // 50px offset
+                    if (window.scrollY >= sectionTop) {
+                        currentSectionId = section.id;
+                    }
+                });
+                
+                const updateLinks = (links) => {
+                    links.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === `#${currentSectionId}`) {
+                            link.classList.add('active');
+                        }
+                    });
+                };
+                updateLinks(desktopNavLinks);
+                updateLinks(mobileNavLinks);
+            }
+
+            function createFloatingShapes() {
+                if (!heroFloatingShapesContainer) return;
+                const numShapes = 15;
+                for (let i = 0; i < numShapes; i++) {
+                    const shape = document.createElement('div');
+                    shape.classList.add('floating-shape');
+                    const size = Math.random() * 80 + 20; // 20px to 100px
+                    shape.style.width = `${size}px`;
+                    shape.style.height = `${size}px`;
+                    shape.style.left = `${Math.random() * 100}%`;
+                    shape.style.top = `${Math.random() * 100}%`;
+                    heroFloatingShapesContainer.appendChild(shape);
+
+                    gsap.to(shape, {
+                        x: (Math.random() - 0.5) * 200, // horizontal movement
+                        y: (Math.random() - 0.5) * 200, // vertical movement
+                        opacity: Math.random() * 0.1 + 0.05,
+                        duration: Math.random() * 20 + 10, // 10-30 seconds
+                        repeat: -1,
+                        yoyo: true,
+                        ease: "sine.inOut",
+                        delay: Math.random() * 5
+                    });
+                }
+            }
+            
+            // --- Event Listeners ---
+            if (mobileMenuToggle) mobileMenuToggle.addEventListener('click', toggleMobileMenu);
+            if (projectsGrid) projectsGrid.addEventListener('click', handleProjectLearnMore);
+            
+            document.querySelectorAll('[data-close-modal]').forEach(el => {
+                el.addEventListener('click', closeModal);
+            });
+            if (modal) {
+                modal.addEventListener('click', (event) => { // Close on overlay click
+                    if (event.target === modal) closeModal();
+                });
+            }
+            document.addEventListener('keydown', (event) => { // Close on Escape key
+                if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
+                    closeModal();
+                }
+            });
+
+            if (openSubmissionModalButton) openSubmissionModalButton.addEventListener('click', openSubmissionModal);
+            
+            window.addEventListener('scroll', updateActiveNavLink);
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    if (mobileMenu.classList.contains('hidden') === false) {
+                        toggleMobileMenu(); // Close mobile menu on link click
+                    }
+                    // Smooth scroll is handled by html class="scroll-smooth" and href="#section-id"
+                });
+            });
+
+            // --- Initialization ---
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+            populateProjects();
+            populateTrendsArticles();
+            renderTrendsChart();
+            updateActiveNavLink(); // Initial call
+            createFloatingShapes(); // Add hero animations
+        });
+    </script>
+</body>
+</html>
